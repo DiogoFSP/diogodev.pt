@@ -200,7 +200,7 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
         <div style={{ position: "absolute", inset: 0, transform: hover ? "scale(1.04)" : "scale(1)", transition: "transform 700ms var(--ease-out)" }}>
           {Thumb && <Thumb />}
         </div>
-        <div className="mono" style={{ position: "absolute", top: 14, left: 14, fontSize: 10, color: "var(--fg-3)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="mono" style={{ position: "absolute", top: 12, left: 12, fontSize: 10, color: "var(--fg-2)", letterSpacing: "0.1em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, background: "var(--glass)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid var(--line)", borderRadius: 6, padding: "4px 8px" }}>
           <span style={{ width: 4, height: 4, borderRadius: 999, background: project.accent }} />
           {project.year} · {loc(project.role, lang)}
         </div>
