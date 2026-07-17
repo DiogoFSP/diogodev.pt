@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
-type Lang = "pt" | "en";
+export type Lang = "pt" | "en";
 
 const LangContext = createContext<{
   lang: Lang;
