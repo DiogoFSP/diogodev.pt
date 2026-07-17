@@ -16,8 +16,8 @@ function spa404(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  // o site vai viver em diogofsp.github.io/meu-portfolio/,
+  // o site vive em diogofsp.github.io/Diogo.dev/,
   // por isso os caminhos dos assets têm de partir desta subpasta
-  base: '/meu-portfolio/',
+  base: '/Diogo.dev/',
   plugins: [react(), spa404()],
 })
