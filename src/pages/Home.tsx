@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import { THUMBS } from "../components/thumbs";
-import { loc, PROJECTS, type Project } from "../data";
+import { loc, type Project } from "../data";
+import { useProjects } from "../projectsStore";
 import { useLang } from "../lang";
 
 // ---------- Hero ----------
@@ -12,7 +13,7 @@ function Hero() {
   const { t, lang } = useLang();
   const navigate = useNavigate();
 
-  // efeito typewriter: o nome escreve-se letra a letra
+  // typewriter
   const full = "Diogo";
   const [text, setText] = useState("");
   useEffect(() => {
@@ -133,14 +134,14 @@ function ProjectsHeader({ count }: { count: number }) {
   );
 }
 
-// Cartão bento — tamanhos: wide (2 colunas), tall (1 coluna x 2 linhas), small (1x1)
+// tamanhos: wide (2 colunas), tall (1 coluna x 2 linhas), small (1x1)
 function BentoCard({ project, size, onOpen }: { project: Project; size: Project["featured"]; onOpen: () => void }) {
   const { lang } = useLang();
   const Thumb = THUMBS[project.id];
   const cardRef = useRef<HTMLElement>(null);
   const [hover, setHover] = useState(false);
 
-  // glow que segue o rato: guarda a posição do cursor em variáveis CSS do cartão
+  // posição do rato em variáveis CSS do cartão (evita re-renders)
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
@@ -183,7 +184,7 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
           : "var(--shadow-1)",
       }}
     >
-      {/* spotlight que segue o cursor */}
+      {/* glow */}
       <div
         style={{
           position: "absolute",
@@ -257,7 +258,6 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
   );
 }
 
-// Botões que aparecem no canto da miniatura ao pairar (repo / demo)
 function QuickLink({ href, icon, label, hover, delay = 0 }: { href: string; icon: string; label: string; hover: boolean; delay?: number }) {
   return (
     <a
@@ -336,7 +336,8 @@ function AboutStrip() {
 
 export default function Home() {
   const navigate = useNavigate();
-  const projects = PROJECTS.filter((p) => p.status !== "hidden");
+  const { projects: all } = useProjects();
+  const projects = all.filter((p) => p.status !== "hidden");
 
   return (
     <main>
@@ -344,7 +345,6 @@ export default function Home() {
       <div id="work" style={{ scrollMarginTop: 80 }}>
         <ProjectsHeader count={projects.length} />
         <div className="container">
-          {/* com poucos projetos a grelha aperta para 2 colunas; volta a 3 quando houver mais */}
           <div className="projects-grid" style={{ "--cols": projects.length < 3 ? 2 : 3 } as React.CSSProperties}>
             {projects.map((p) => (
               <BentoCard key={p.id} project={p} size={p.featured} onOpen={() => navigate(`/projeto/${p.slug}`)} />

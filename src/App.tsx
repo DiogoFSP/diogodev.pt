@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import CmdPalette from "./components/CmdPalette";
+import Spotlight from "./components/Spotlight";
 import TopNav from "./components/TopNav";
+import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import Project from "./pages/Project";
 
-// Numa SPA a navegação não recarrega a página, logo o browser mantém o
-// scroll onde estava. Este componente repõe o topo sempre que a rota muda.
+// repõe o scroll no topo quando a rota muda
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -16,15 +18,24 @@ function ScrollToTop() {
 }
 
 function App() {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+
   return (
     <>
       <ScrollToTop />
-      <TopNav />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/projeto/:slug" element={<Project />} />
-        <Route path="/contacto" element={<Contact />} />
-      </Routes>
+      {!isAdmin && <Spotlight />}
+      <div style={{ position: "relative", zIndex: 2 }}>
+        {!isAdmin && <TopNav onPalette={() => setPaletteOpen(true)} />}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/projeto/:slug" element={<Project />} />
+          <Route path="/contacto" element={<Contact />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </div>
+      <CmdPalette open={paletteOpen} setOpen={setPaletteOpen} />
     </>
   );
 }

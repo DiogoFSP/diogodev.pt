@@ -2,17 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import { addMessage } from "../projectsStore";
 import { useLang } from "../lang";
 
-// ============================================================================
-//  CONFIGURAÇÃO DO ENVIO DE MENSAGENS
-//  Para receber os pedidos por email, regista-te grátis em
-//  https://web3forms.com, copia a "Access Key" e cola-a aqui.
-//  Enquanto a key for o placeholder, o site funciona em modo demo
-//  (guarda as mensagens só neste browser, para se ver o fluxo).
-// ============================================================================
+// Web3Forms — entrega das mensagens por email (a access key é pública)
 const WEB3FORMS_KEY = "fdd122e8-4261-4e85-be7c-2216367e87b8";
-const FORM_CONFIGURED = WEB3FORMS_KEY.length > 0 && !WEB3FORMS_KEY.startsWith("COLOQUE");
+const FORM_CONFIGURED = WEB3FORMS_KEY.length > 0;
 
 type FormState = {
   name: string;
@@ -24,15 +19,12 @@ type FormState = {
 
 const EMPTY_FORM: FormState = { name: "", email: "", subject: "geral", message: "", honeypot: "" };
 
-// Anti-spam: intervalo mínimo entre envios (por browser)
+// intervalo mínimo entre envios (por browser)
 const COOLDOWN_MS = 5 * 60 * 1000;
 const LAST_SENT_KEY = "diogo-last-contact";
 
-// Verifica se o domínio do email tem servidores de correio (registos MX),
-// via DNS-over-HTTPS. Não prova que a caixa exata existe — isso só um
-// backend consegue — mas apanha domínios inventados e erros de escrita.
-// Em caso de falha da própria verificação (rede, etc.), não bloqueia: na
-// dúvida, deixa-se passar um humano em vez de o perder.
+// verifica via DNS-over-HTTPS se o domínio do email tem MX/A;
+// se a própria verificação falhar, não bloqueia o envio
 async function domainAcceptsEmail(email: string): Promise<boolean> {
   const domain = email.split("@")[1];
   if (!domain) return false;
@@ -91,10 +83,10 @@ export default function Contact() {
     e.preventDefault();
     setTouched({ name: true, email: true, message: true });
     if (!isValid) return;
-    // honeypot preenchido = bot; falha genérica sem dar pistas
+    // honeypot preenchido = bot
     if (form.honeypot) { setError(t("Ocorreu um erro.", "Something went wrong.")); return; }
 
-    // cooldown: 1 envio a cada 5 minutos (por browser)
+    // cooldown
     const lastSent = Number(localStorage.getItem(LAST_SENT_KEY) || 0);
     const waitMs = COOLDOWN_MS - (Date.now() - lastSent);
     if (waitMs > 0) {
@@ -109,7 +101,7 @@ export default function Contact() {
     setSending(true);
     setError(null);
 
-    // o domínio do email recebe correio? (MX check via DNS-over-HTTPS)
+    // MX check
     if (!(await domainAcceptsEmail(form.email.trim()))) {
       setSending(false);
       setError(t(
@@ -118,6 +110,11 @@ export default function Contact() {
       ));
       return;
     }
+
+    // regista a mensagem (BD ou local) sem bloquear o envio por email
+    try {
+      await addMessage({ name: form.name.trim(), email: form.email.trim(), subject: form.subject, message: form.message.trim() });
+    } catch { /* o email via Web3Forms continua a ser a entrega principal */ }
 
     if (FORM_CONFIGURED) {
       try {
@@ -145,21 +142,7 @@ export default function Contact() {
         return;
       }
     } else {
-      // Modo demo (sem key): guarda localmente para o fluxo ser visível
-      await new Promise((r) => setTimeout(r, 1000));
-      try {
-        const inbox = JSON.parse(localStorage.getItem("diogo-messages") || "[]");
-        inbox.unshift({
-          id: Date.now(),
-          name: form.name.trim(),
-          email: form.email.trim(),
-          subject: form.subject,
-          message: form.message.trim(),
-          date: new Date().toISOString(),
-          read: false,
-        });
-        localStorage.setItem("diogo-messages", JSON.stringify(inbox.slice(0, 200)));
-      } catch { /* localStorage indisponível — demo apenas */ }
+      await new Promise((r) => setTimeout(r, 700));
     }
 
     try { localStorage.setItem(LAST_SENT_KEY, String(Date.now())); } catch { /* sem storage, sem cooldown */ }
@@ -235,7 +218,7 @@ export default function Contact() {
             />
           </Field>
 
-          {/* Honeypot — campo invisível que só bots preenchem */}
+          {/* honeypot */}
           <input type="text" name="company" value={form.honeypot} onChange={(e) => update("honeypot", e.target.value)} tabIndex={-1} autoComplete="off" style={{ position: "absolute", left: "-9999px", height: 0, width: 0, opacity: 0 }} />
 
           {error && <div style={{ color: "var(--danger)", fontSize: 13 }}>{error}</div>}

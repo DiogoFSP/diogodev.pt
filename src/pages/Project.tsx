@@ -2,15 +2,19 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import { THUMBS } from "../components/thumbs";
-import { loc, PROJECTS, type Project as ProjectData } from "../data";
+import { loc, type Project as ProjectData } from "../data";
+import { useProjects } from "../projectsStore";
 import { useLang } from "../lang";
 
 export default function Project() {
   const { slug } = useParams();
   const { t } = useLang();
-  const project = PROJECTS.find((p) => p.slug === slug);
+  const { projects, loading } = useProjects();
+  const project = projects.find((p) => p.slug === slug);
 
-  // slug desconhecido → 404 amigável em vez de página rebentada
+  // evita mostrar o 404 enquanto os dados carregam
+  if (loading) return <main style={{ minHeight: "60vh" }} />;
+
   if (!project) {
     return (
       <main className="container" style={{ padding: "120px 0", textAlign: "center" }}>
@@ -86,7 +90,7 @@ function Header({ project, Thumb }: { project: ProjectData; Thumb?: React.FC }) 
           </div>
         </div>
 
-        {/* painel da miniatura, com moldura de "janela" */}
+        {/* miniatura */}
         <div className="project-thumb" style={{ position: "relative", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--bg-1)" }}>
           <div style={{ position: "absolute", inset: 0 }}>{Thumb && <Thumb />}</div>
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(60% 60% at 80% 20%, ${project.accent}22, transparent 60%)`, pointerEvents: "none" }} />
@@ -123,7 +127,6 @@ function MetricsStrip({ project }: { project: ProjectData }) {
   );
 }
 
-// Rótulo lateral fixo + conteúdo — o esqueleto das secções longas
 function SectionShell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="container" style={{ paddingBottom: 80 }}>
@@ -195,7 +198,8 @@ function TeamStrip({ project }: { project: ProjectData }) {
 function UpNext({ current }: { current: ProjectData }) {
   const { t, lang } = useLang();
   const navigate = useNavigate();
-  const others = PROJECTS.filter((p) => p.id !== current.id && p.status !== "hidden");
+  const { projects } = useProjects();
+  const others = projects.filter((p) => p.id !== current.id && p.status !== "hidden");
   if (others.length === 0) return null;
   return (
     <section style={{ borderTop: "1px solid var(--line)", padding: "56px 0 8px" }}>
