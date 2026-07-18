@@ -207,7 +207,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       refresh();
       setView("list");
     } catch {
-      showToast("Não foi possível guardar — tenta de novo");
+      showToast("Não foi possível guardar — tentar novamente");
     }
   };
 
@@ -218,7 +218,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       refresh();
       showToast(next === "hidden" ? `“${p.title}” agora oculto` : `“${p.title}” agora publicado`);
     } catch {
-      showToast("Não foi possível alterar — tenta de novo");
+      showToast("Não foi possível alterar — tentar novamente");
     }
   };
 
@@ -229,7 +229,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       refresh();
       showToast(`Eliminado “${p.title}”`);
     } catch {
-      showToast("Não foi possível eliminar — tenta de novo");
+      showToast("Não foi possível eliminar — tentar novamente");
     }
   };
 
@@ -274,16 +274,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           <SidebarItem icon="layers" label="projetos" count={projects.length} active={view === "list" || view === "edit" || view === "new"} onClick={() => setView("list")} />
           <SidebarItem icon="command" label="mensagens" count={unreadCount > 0 ? unreadCount : messages.length} highlight={unreadCount > 0} active={view === "messages"} onClick={() => setView("messages")} />
 
-          <div style={{ marginTop: "auto", padding: 12, background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)" }}>
-            <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
-              {supabaseConfigured ? "ligado" : "a caminho"}
-            </div>
-            <div style={{ fontSize: 12.5, color: "var(--fg-2)", lineHeight: 1.5 }}>
-              {supabaseConfigured
-                ? <>Base de dados central ativa — as edições valem para todos os visitantes.</>
-                : <>Login real e base de dados central chegam com o <span className="mono" style={{ color: "var(--accent)" }}>Supabase</span>.</>}
-            </div>
-          </div>
+          <DbStatus projects={projects.length} messages={messages.length} unread={unreadCount} />
         </aside>
 
         {/* conteúdo */}
@@ -303,6 +294,47 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       {toast && (
         <div style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", background: "var(--bg-2)", border: "1px solid var(--line-strong)", borderRadius: "var(--r-md)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.5)", animation: "fadeUp 220ms var(--ease-out)", fontSize: 13 }}>
           <Icon name="check" size={14} style={{ color: "var(--success)" }} /> {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// estado da BD medido com uma query real (latência incluída), a cada 30s
+function DbStatus({ projects, messages, unread }: { projects: number; messages: number; unread: number }) {
+  const [ok, setOk] = useState<boolean | null>(null);
+  const [ping, setPing] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+    let alive = true;
+    const check = async () => {
+      const t0 = performance.now();
+      const { error } = await supabase!.from("projects").select("id", { head: true, count: "exact" });
+      if (!alive) return;
+      setOk(!error);
+      setPing(error ? null : Math.round(performance.now() - t0));
+    };
+    check();
+    const id = setInterval(check, 30000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  return (
+    <div style={{ marginTop: "auto", padding: 12, background: "var(--bg-2)", border: "1px solid var(--line)", borderRadius: "var(--r-md)" }}>
+      <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ width: 6, height: 6, borderRadius: 999, background: !supabaseConfigured ? "var(--warn)" : ok === false ? "var(--danger)" : ok ? "var(--success)" : "var(--fg-4)", boxShadow: ok ? "0 0 8px var(--success)" : "none" }} />
+        base de dados
+      </div>
+      {supabaseConfigured ? (
+        <div className="mono" style={{ fontSize: 11.5, color: "var(--fg-2)", lineHeight: 2 }}>
+          <div>{ok === null ? "a verificar…" : ok ? <>ligada · <span style={{ color: "var(--success)" }}>{ping} ms</span></> : <span style={{ color: "var(--danger)" }}>sem ligação</span>}</div>
+          <div>{projects} projeto{projects === 1 ? "" : "s"} · {messages} mensage{messages === 1 ? "m" : "ns"}</div>
+          {unread > 0 && <div style={{ color: "var(--accent)" }}>{unread} por ler</div>}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12.5, color: "var(--fg-2)", lineHeight: 1.5 }}>
+          Modo local — sem base de dados configurada.
         </div>
       )}
     </div>
@@ -386,7 +418,7 @@ function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden
           <div style={{ padding: 60, textAlign: "center", color: "var(--fg-3)" }}>
             <div className="mono" style={{ fontSize: 12, marginBottom: 8 }}>sem resultados</div>
             <div style={{ fontSize: 14 }}>
-              tenta outra pesquisa, ou <button onClick={() => setSearch("")} style={{ background: "none", border: 0, color: "var(--accent)", cursor: "pointer", textDecoration: "underline" }}>limpar filtro</button>
+              tentar outra pesquisa, ou <button onClick={() => setSearch("")} style={{ background: "none", border: 0, color: "var(--accent)", cursor: "pointer", textDecoration: "underline" }}>limpar filtro</button>
             </div>
           </div>
         )}
@@ -566,8 +598,7 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
           </FormSection>
 
           <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", lineHeight: 1.6 }}>
-            nota: os textos editados aqui ficam iguais em PT e EN; a edição
-            bilingue e as miniaturas chegam com o Supabase.
+            nota: os textos editados aqui ficam iguais em PT e EN.
           </div>
         </div>
 
@@ -596,7 +627,7 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
 function VisibilityToggle({ value, onChange }: { value: "published" | "hidden"; onChange: (v: "published" | "hidden") => void }) {
   const opts = [
     { v: "published" as const, label: "Publicado", sub: "Visível na página inicial.", color: "var(--success)" },
-    { v: "hidden" as const, label: "Oculto", sub: "Só visto por ti, no admin.", color: "var(--warn)" },
+    { v: "hidden" as const, label: "Oculto", sub: "Apenas visível no admin.", color: "var(--warn)" },
   ];
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -679,10 +710,10 @@ function MessagesView({ messages, onRead, onMarkAllRead, onDelete, unreadCount }
       <div style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "var(--accent-soft)", border: "1px solid var(--accent)", borderRadius: "var(--r-md)", padding: "14px 16px", marginBottom: 20 }}>
         <Icon name="check" size={15} style={{ color: "var(--accent)", marginTop: 1, flexShrink: 0 }} />
         <div style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
-          As mensagens novas chegam ao teu <strong style={{ color: "var(--fg)" }}>email</strong> (via Web3Forms).{" "}
+          As mensagens novas chegam por <strong style={{ color: "var(--fg)" }}>email</strong> (via Web3Forms).{" "}
           {supabaseConfigured
             ? <>Este é o <strong style={{ color: "var(--fg)" }}>arquivo central</strong> — todas as mensagens do formulário ficam aqui, acessíveis em qualquer dispositivo.</>
-            : <>Esta lista mostra o histórico guardado <strong style={{ color: "var(--fg)" }}>neste browser</strong> — com o Supabase passa a ser um arquivo central.</>}
+            : <>Esta lista mostra o histórico guardado <strong style={{ color: "var(--fg)" }}>neste browser</strong>.</>}
         </div>
       </div>
 
@@ -690,7 +721,7 @@ function MessagesView({ messages, onRead, onMarkAllRead, onDelete, unreadCount }
         <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "80px 20px", textAlign: "center" }}>
           <Icon name="command" size={24} style={{ color: "var(--fg-4)", marginBottom: 14 }} />
           <div style={{ fontSize: 15, color: "var(--fg-2)", marginBottom: 6 }}>Ainda não há mensagens neste browser.</div>
-          <div className="mono" style={{ fontSize: 12, color: "var(--fg-4)" }}>Envia uma pelo formulário de contacto e volta aqui.</div>
+          <div className="mono" style={{ fontSize: 12, color: "var(--fg-4)" }}>As mensagens do formulário de contacto aparecem aqui.</div>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 16, alignItems: "start" }}>
@@ -704,7 +735,7 @@ function MessagesView({ messages, onRead, onMarkAllRead, onDelete, unreadCount }
                       {!m.read && <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--accent)", flexShrink: 0 }} />}
                       <span style={{ fontSize: 14, fontWeight: m.read ? 400 : 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</span>
                     </span>
-                    <span className="tag" style={{ flexShrink: 0 }}>{SUBJECT_LABELS[m.subject] || m.subject}</span>
+                    <span className="tag" style={{ flexShrink: 0, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>{SUBJECT_LABELS[m.subject] || m.subject}</span>
                   </div>
                   <div style={{ fontSize: 12, color: "var(--fg-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{m.message}</div>
                   <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)" }}>{fmtDate(m.date)}</div>
@@ -731,7 +762,7 @@ function MessagesView({ messages, onRead, onMarkAllRead, onDelete, unreadCount }
             ) : (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 280, color: "var(--fg-3)" }}>
                 <Icon name="command" size={22} style={{ marginBottom: 12, color: "var(--fg-4)" }} />
-                <div style={{ fontSize: 14 }}>Seleciona uma mensagem para ler.</div>
+                <div style={{ fontSize: 14 }}>Selecionar uma mensagem para ler.</div>
               </div>
             )}
           </div>
@@ -766,7 +797,7 @@ function MessageDetail({ m, fmtDate, onDelete }: { m: Message; fmtDate: (iso: st
           </a>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <span className="tag accent">{SUBJECT_LABELS[m.subject] || m.subject}</span>
+          <span className="tag accent" style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>{SUBJECT_LABELS[m.subject] || m.subject}</span>
           <button
             className="btn btn-icon"
             title="eliminar"
@@ -805,7 +836,7 @@ function MessageDetail({ m, fmtDate, onDelete }: { m: Message; fmtDate: (iso: st
             </a>
             <button className="btn btn-ghost" onClick={() => setComposing(false)}>cancelar</button>
             <span style={{ fontSize: 11, color: "var(--fg-4)", marginLeft: "auto", maxWidth: 280, lineHeight: 1.4 }}>
-              abre o teu programa de email com a resposta pronta — envio direto do site chega com o Supabase
+              abre o programa de email com a resposta pronta e endereçada
             </span>
           </div>
         </div>
