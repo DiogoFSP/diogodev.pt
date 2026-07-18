@@ -243,7 +243,7 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
             <span key={tag} className="tag">{tag}</span>
           ))}
         </div>
-        {size === "tall" && (
+        {size !== "small" && project.metrics.length > 0 && (
           <div style={{ marginTop: "auto", display: "grid", gridTemplateColumns: `repeat(${project.metrics.length}, 1fr)`, gap: 12, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
             {project.metrics.map((m, i) => (
               <div key={i}>
