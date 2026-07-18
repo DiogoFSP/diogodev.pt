@@ -15,7 +15,6 @@ function spa404(): Plugin {
 
 // https://vite.dev/config/
 export default defineConfig({
-  // GitHub Pages serve o site em /Diogo.dev/
-  base: '/Diogo.dev/',
+  base: '/',
   plugins: [react(), spa404()],
 })
