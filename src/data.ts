@@ -166,7 +166,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "portfolio",
-    title: "Diogo.dev",
+    title: "diogodev.pt",
     slug: "diogo-dev",
     year: "2026",
     role: { pt: "Solo · Projeto pessoal", en: "Solo · Personal project" },

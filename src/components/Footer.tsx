@@ -18,7 +18,7 @@ export default function Footer() {
           gap: 12,
         }}
       >
-        <div className="mono">© 2026 · diogo.dev</div>
+        <div className="mono">© 2026 · diogodev.pt</div>
         <div className="mono" style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
           <Link to="/" style={linkStyle}>{t("início", "home")}</Link>
           <Link to="/contacto" style={linkStyle}>{t("contacto", "contact")}</Link>

@@ -8,7 +8,7 @@ export default function Logo({ size = 28 }: { size?: number }) {
         <circle cx="22" cy="11" r="1.5" fill="var(--accent)" />
       </svg>
       <span>
-        diogo<span style={{ color: "var(--fg-3)" }}>.dev</span>
+        diogodev<span style={{ color: "var(--fg-3)" }}>.pt</span>
       </span>
     </span>
   );
