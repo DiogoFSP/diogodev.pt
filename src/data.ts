@@ -142,7 +142,7 @@ export const PROJECTS: Project[] = [
       { label: { pt: "nota final", en: "final grade" }, value: "92 / 100" },
     ],
     accent: "#FFB454",
-    featured: "tall",
+    featured: "wide",
     status: "published",
     github: "https://github.com/DiogoFSP/LS-4-em-linha-Especial",
     demo: null,
@@ -163,6 +163,81 @@ export const PROJECTS: Project[] = [
         body: {
           pt: "Interface construída em React com a lógica de jogo em JavaScript, entregue em grupo de dois com nota final de 92/100.",
           en: "Interface built in React with the game logic in JavaScript, delivered as a team of two with a final grade of 92/100.",
+        },
+      },
+    ],
+  },
+  {
+    id: "portfolio",
+    title: "Diogo.dev",
+    slug: "diogo-dev",
+    year: "2026",
+    role: { pt: "Solo · Projeto pessoal", en: "Solo · Personal project" },
+    summary: {
+      pt: "Este próprio site: portfólio bilingue construído de raiz em React + TypeScript com Vite. Design tokens com tema dark/light, formulário de contacto com envio real e anti-spam em camadas, e deploy contínuo no GitHub Pages a cada push.",
+      en: "This very site: a bilingual portfolio built from scratch in React + TypeScript with Vite. Design tokens with dark/light theming, a contact form with real delivery and layered anti-spam, and continuous deployment to GitHub Pages on every push.",
+    },
+    tagline: {
+      pt: "O site onde estás agora — sim, também conta.",
+      en: "The site you're on right now — yes, it counts.",
+    },
+    tags: ["React", "TypeScript", "Vite", "CI/CD"],
+    metrics: [
+      { label: { pt: "línguas", en: "languages" }, value: "PT · EN" },
+      { label: { pt: "temas", en: "themes" }, value: "dark · light" },
+      { label: { pt: "deploy", en: "deploy" }, value: { pt: "automático", en: "automatic" } },
+    ],
+    accent: "#6EE7A8",
+    featured: "wide",
+    status: "published",
+    github: "https://github.com/DiogoFSP/Diogo.dev",
+    demo: "https://diogofsp.github.io/Diogo.dev/",
+    course: { pt: "Projeto pessoal", en: "Personal project" },
+    story: [
+      {
+        kind: { pt: "o desafio", en: "the challenge" },
+        title: { pt: "Uma casa própria na internet", en: "A home of my own on the internet" },
+        body: {
+          pt: "Ter um portfólio com identidade própria — bilingue, com os projetos contados a sério e um canal de contacto que funciona — em vez de um perfil igual a todos os outros. Construído fase a fase, com cada etapa commitada e publicada automaticamente.",
+          en: "Have a portfolio with its own identity — bilingual, with projects properly told and a contact channel that actually works — instead of a profile like everyone else's. Built phase by phase, with every step committed and automatically published.",
+        },
+      },
+      {
+        kind: { pt: "o resultado", en: "the result" },
+        title: { pt: "No ar — e a crescer", en: "Live — and growing" },
+        body: {
+          pt: "Online no GitHub Pages com CI/CD, formulário de contacto com entrega real e proteções anti-spam. Próxima paragem: painel de administração com base de dados Supabase para gerir projetos e mensagens.",
+          en: "Live on GitHub Pages with CI/CD, a contact form with real delivery and anti-spam protections. Next stop: an admin panel backed by a Supabase database to manage projects and messages.",
+        },
+      },
+    ],
+    build: [
+      {
+        title: { pt: "Design tokens + dois temas", en: "Design tokens + two themes" },
+        body: {
+          pt: "Todas as cores, fontes e espaçamentos vivem em variáveis CSS; o tema claro redefine as mesmas variáveis e o site inteiro muda sem tocar nos componentes.",
+          en: "All colors, fonts and spacing live in CSS variables; the light theme redefines the same variables and the whole site changes without touching components.",
+        },
+      },
+      {
+        title: { pt: "i18n PT/EN caseiro", en: "Homemade PT/EN i18n" },
+        body: {
+          pt: "Contexto React próprio com persistência da escolha e título/descrição da página a acompanhar a língua — sem bibliotecas externas.",
+          en: "Custom React context with persisted choice and page title/description following the language — no external libraries.",
+        },
+      },
+      {
+        title: { pt: "Anti-spam em camadas", en: "Layered anti-spam" },
+        body: {
+          pt: "Honeypot invisível para bots, cooldown de 5 minutos entre envios e verificação dos servidores de correio (MX) do email indicado, via DNS-over-HTTPS.",
+          en: "Invisible honeypot for bots, a 5-minute cooldown between sends, and MX-record verification of the given email via DNS-over-HTTPS.",
+        },
+      },
+      {
+        title: { pt: "CI/CD para o GitHub Pages", en: "CI/CD to GitHub Pages" },
+        body: {
+          pt: "Cada push ao main dispara um workflow de GitHub Actions que compila e publica o site em segundos, com fallback 404 para as rotas da SPA.",
+          en: "Every push to main triggers a GitHub Actions workflow that builds and publishes the site in seconds, with a 404 fallback for SPA routes.",
         },
       },
     ],

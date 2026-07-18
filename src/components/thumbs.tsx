@@ -123,7 +123,50 @@ function ThumbDeepSea() {
   );
 }
 
+function ThumbPortfolio() {
+  // O próprio site em miniatura: janela de browser, typewriter e cartões
+  return (
+    <svg viewBox="0 0 180 160" style={{ width: "100%", height: "100%" }}>
+      <defs>
+        <radialGradient id="gpf" cx="0.3" cy="0.2" r="0.9">
+          <stop offset="0" stopColor="#6EE7A8" stopOpacity="0.14" />
+          <stop offset="1" stopColor="#6EE7A8" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="180" height="160" fill="#0F0F11" />
+      <rect width="180" height="160" fill="url(#gpf)" />
+
+      {/* janela do browser */}
+      <rect x="18" y="18" width="144" height="124" rx="8" fill="#141417" stroke="#2A2A31" />
+      <circle cx="32" cy="30" r="2.5" fill="#3A3A40" />
+      <circle cx="41" cy="30" r="2.5" fill="#3A3A40" />
+      <circle cx="50" cy="30" r="2.5" fill="#3A3A40" />
+      <rect x="62" y="24" width="88" height="12" rx="6" fill="#0F0F11" stroke="#1F1F24" />
+      <text x="70" y="33" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#6EE7A8">diogodev.pt</text>
+
+      {/* hero com typewriter */}
+      <text x="32" y="66" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="#F5F5F7">Olá, sou o Diogo</text>
+      <rect x="140" y="57" width="5" height="11" fill="#FFB454">
+        <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1s" repeatCount="indefinite" />
+      </rect>
+      <rect x="32" y="76" width="96" height="4" rx="2" fill="#2A2A31" />
+      <rect x="32" y="84" width="72" height="4" rx="2" fill="#2A2A31" />
+
+      {/* dois cartões de projetos */}
+      <rect x="32" y="98" width="52" height="32" rx="4" fill="#0F0F11" stroke="#2A2A31" />
+      <rect x="38" y="104" width="24" height="3" rx="1.5" fill="#5EBFFF" />
+      <rect x="38" y="112" width="34" height="3" rx="1.5" fill="#2A2A31" />
+      <rect x="38" y="118" width="28" height="3" rx="1.5" fill="#2A2A31" />
+      <rect x="92" y="98" width="52" height="32" rx="4" fill="#0F0F11" stroke="#2A2A31" />
+      <rect x="98" y="104" width="24" height="3" rx="1.5" fill="#FFB454" />
+      <rect x="98" y="112" width="34" height="3" rx="1.5" fill="#2A2A31" />
+      <rect x="98" y="118" width="28" height="3" rx="1.5" fill="#2A2A31" />
+    </svg>
+  );
+}
+
 export const THUMBS: Record<string, FC> = {
   "4inline": Thumb4inline,
   deepsea: ThumbDeepSea,
+  portfolio: ThumbPortfolio,
 };
