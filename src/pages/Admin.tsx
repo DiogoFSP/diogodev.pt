@@ -8,7 +8,6 @@ import {
   deleteMessage as deleteMessageRemote,
   deleteProject as deleteProjectRemote,
   fetchMessages,
-  importOriginals,
   markAllMessagesRead,
   setMessageRead,
   upsertProject,
@@ -224,24 +223,13 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
   };
 
   const remove = async (p: Project) => {
-    if (!confirm(`Eliminar “${p.title}”? (podes sempre usar "repor originais")`)) return;
+    if (!confirm(`Eliminar “${p.title}”? Esta ação não pode ser revertida.`)) return;
     try {
       await deleteProjectRemote(p.id);
       refresh();
       showToast(`Eliminado “${p.title}”`);
     } catch {
       showToast("Não foi possível eliminar — tenta de novo");
-    }
-  };
-
-  const reset = async () => {
-    if (!confirm("Repor/importar os projetos originais do data.ts?")) return;
-    try {
-      await importOriginals();
-      refresh();
-      showToast("Projetos originais repostos/importados");
-    } catch {
-      showToast("Não foi possível repor — tenta de novo");
     }
   };
 
@@ -301,7 +289,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         {/* conteúdo */}
         <main style={{ overflow: "auto", padding: "32px 36px", background: "var(--bg)" }}>
           {view === "list" && (
-            <ListView projects={filtered} totalCount={projects.length} hiddenCount={hiddenCount} showHidden={showHidden} setShowHidden={setShowHidden} search={search} setSearch={setSearch} onEdit={startEdit} onNew={startNew} onDelete={remove} onToggleVisibility={toggleVisibility} onReset={reset} />
+            <ListView projects={filtered} totalCount={projects.length} hiddenCount={hiddenCount} showHidden={showHidden} setShowHidden={setShowHidden} search={search} setSearch={setSearch} onEdit={startEdit} onNew={startNew} onDelete={remove} onToggleVisibility={toggleVisibility} />
           )}
           {(view === "edit" || view === "new") && (
             <EditView project={editing} onSave={save} onCancel={() => setView("list")} isNew={view === "new"} />
@@ -345,12 +333,12 @@ function SidebarItem({ icon, label, count, active, onClick, highlight }: { icon:
 
 // ---------- lista de projetos ----------
 
-function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden, search, setSearch, onEdit, onNew, onDelete, onToggleVisibility, onReset }: {
+function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden, search, setSearch, onEdit, onNew, onDelete, onToggleVisibility }: {
   projects: Project[]; totalCount: number; hiddenCount: number;
   showHidden: boolean; setShowHidden: (v: boolean) => void;
   search: string; setSearch: (v: string) => void;
   onEdit: (p: Project) => void; onNew: () => void; onDelete: (p: Project) => void;
-  onToggleVisibility: (p: Project) => void; onReset: () => void;
+  onToggleVisibility: (p: Project) => void;
 }) {
   return (
     <div>
@@ -363,7 +351,6 @@ function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden
           </h2>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <button className="btn btn-ghost mono" onClick={onReset} style={{ fontSize: 11 }}>repor originais</button>
           <label
             style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "8px 12px", border: `1px solid ${showHidden ? "var(--accent)" : "var(--line)"}`, borderRadius: "var(--r-md)", background: showHidden ? "var(--accent-soft)" : "var(--bg-1)" }}
             onClick={() => setShowHidden(!showHidden)}

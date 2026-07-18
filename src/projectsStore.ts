@@ -66,16 +66,6 @@ export async function deleteProject(id: string): Promise<void> {
   saveLocalProjects(loadLocalProjects().filter((x) => x.id !== id));
 }
 
-export async function importOriginals(): Promise<void> {
-  if (supabase) {
-    const seeded = PROJECTS.map((p, i) => ({ ...p, position: i }));
-    const { error } = await supabase.from("projects").upsert(seeded);
-    if (error) throw error;
-    return;
-  }
-  try { localStorage.removeItem(PROJECTS_KEY); } catch { /* nada a repor */ }
-}
-
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
