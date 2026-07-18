@@ -1,7 +1,6 @@
 import { useLang } from "../lang";
 
-// Pílula pt/en — as duas opções estão sempre visíveis (largura fixa,
-// nada salta no layout) e a ativa fica invertida.
+// pílula pt/en de largura fixa
 export default function LangToggle() {
   const { lang, setLang } = useLang();
   return (

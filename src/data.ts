@@ -1,14 +1,12 @@
 import type { Lang } from "./lang";
 
-// Um texto pode ser igual nas duas línguas (string) ou bilingue ({pt, en})
+// string única ou bilingue {pt, en}
 export type Localized = string | { pt: string; en: string };
 
 export type Metric = { label: Localized; value: Localized };
 
-// Um passo da narrativa do projeto (desafio → processo → resultado)
 export type StoryStep = { kind: Localized; title: Localized; body: Localized };
 
-// Um ponto de arquitetura/implementação
 export type BuildPoint = { title: Localized; body: Localized };
 
 export type Project = {
@@ -32,7 +30,6 @@ export type Project = {
   build?: BuildPoint[];
 };
 
-// Tradutor para valores Localized (o t() do contexto só trata strings soltas)
 export function loc(v: Localized, lang: Lang): string {
   if (typeof v === "string") return v;
   return v[lang] ?? v.pt ?? v.en;

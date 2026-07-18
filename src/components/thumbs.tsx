@@ -1,10 +1,9 @@
 import type { FC } from "react";
 
-// Miniaturas dos projetos — SVGs estilizados desenhados em código
-// (sem imagens de stock), vindos do design (thumbs.jsx).
+// Miniaturas dos projetos — SVGs desenhados em código.
 
 function Thumb4inline() {
-  // Tabuleiro de Connect-Four em movimento
+  // tabuleiro de Connect-Four
   const filled: Record<string, "y" | "r"> = {
     "1-5": "y", "2-5": "r", "3-5": "y", "3-4": "r",
     "4-5": "y", "4-4": "y", "4-3": "r", "5-5": "r",
@@ -40,8 +39,7 @@ function Thumb4inline() {
 }
 
 function ThumbDeepSea() {
-  // Vista top-down do fosso marinho, como o jogo real: grelha de tiles,
-  // paredes de rocha, polvo, correntes, drone e minério.
+  // vista top-down do fosso: tiles, rochas, polvo, drone e minério
   const tile = 20;
   const rocks = [
     [0, 0], [0, 1], [0, 3], [0, 4], [0, 6], [0, 7],
@@ -89,7 +87,7 @@ function ThumbDeepSea() {
         </g>
       </g>
 
-      {/* drone (vindo dos screenshots: corpo cinzento, cúpula azul) */}
+      {/* drone */}
       <g>
         <animateTransform attributeName="transform" type="translate" values="0,0; 0,-3; 0,0" dur="3.4s" repeatCount="indefinite" />
         <rect x="106" y="26" width="26" height="15" rx="5" fill="#D7DDE3" stroke="#5EBFFF" strokeWidth="0.8" />
@@ -112,7 +110,7 @@ function ThumbDeepSea() {
         </circle>
       </g>
 
-      {/* HUD do jogo: barras de combustível e integridade */}
+      {/* HUD */}
       <g transform="translate(122,146)">
         <rect x="0" y="0" width="50" height="4" rx="2" fill="#2B2B33" />
         <rect x="0" y="0" width="34" height="4" rx="2" fill="#F0A63C" />
@@ -124,7 +122,7 @@ function ThumbDeepSea() {
 }
 
 function ThumbPortfolio() {
-  // O próprio site em miniatura: janela de browser, typewriter e cartões
+  // o site em miniatura
   return (
     <svg viewBox="0 0 180 160" style={{ width: "100%", height: "100%" }}>
       <defs>

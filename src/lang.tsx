@@ -22,7 +22,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("diogo-lang", lang);
     document.documentElement.lang = lang;
 
-    // título e descrição acompanham a língua (SEO + separador do browser)
+    // atualiza título e meta description conforme a língua
     const meta = lang === "en"
       ? {
           title: "Diogo Pinto — Software Developer | Computer Engineering @ ISEC",

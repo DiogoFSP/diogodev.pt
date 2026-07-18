@@ -1,7 +1,6 @@
 import { useTheme } from "../theme";
 
-// Botão-ícone 32x32 fixo (classe .btn-icon) — a largura nunca muda,
-// por isso trocar de tema não desloca nada à volta.
+// botão-ícone de largura fixa (não desloca o layout ao alternar)
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   return (
