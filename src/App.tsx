@@ -7,12 +7,23 @@ import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import Project from "./pages/Project";
+import { recordPageView } from "./projectsStore";
 
 // repõe o scroll no topo quando a rota muda
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
+// regista a visita na base de dados quando a rota muda (o admin não conta)
+function TrackViews() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
+    recordPageView(pathname).catch(() => {});
   }, [pathname]);
   return null;
 }
@@ -25,6 +36,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <TrackViews />
       {!isAdmin && <Spotlight />}
       <div style={{ position: "relative", zIndex: 2 }}>
         {!isAdmin && <TopNav onPalette={() => setPaletteOpen(true)} />}

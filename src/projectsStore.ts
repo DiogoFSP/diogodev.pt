@@ -67,6 +67,17 @@ export async function uploadThumb(file: File, slug: string): Promise<string> {
   return supabase.storage.from("thumbs").getPublicUrl(path).data.publicUrl;
 }
 
+// grava a ordem atual dos projetos (position = índice na lista)
+export async function saveProjectOrder(list: Project[]): Promise<void> {
+  const ordered = list.map((p, i) => ({ ...p, position: i }));
+  if (supabase) {
+    const { error } = await supabase.from("projects").upsert(ordered);
+    if (error) throw error;
+    return;
+  }
+  saveLocalProjects(ordered);
+}
+
 export async function deleteProject(id: string): Promise<void> {
   if (supabase) {
     const { error } = await supabase.from("projects").delete().eq("id", id);
@@ -92,6 +103,45 @@ export function useProjects() {
   useEffect(() => { refresh(); }, [refresh]);
 
   return { projects, loading, refresh };
+}
+
+// ---------------- estatísticas de visitas ----------------
+
+export type PageView = { path: string; created_at: string };
+
+let lastViewPath = "";
+let lastViewAt = 0;
+
+// regista uma visita; falha em silêncio (estatística não é crítica)
+export async function recordPageView(path: string): Promise<void> {
+  if (!supabase) return;
+  // ignora repetições da mesma página em menos de 30s (refresh, StrictMode)
+  if (path === lastViewPath && Date.now() - lastViewAt < 30000) return;
+  lastViewPath = path;
+  lastViewAt = Date.now();
+  const { data } = await supabase.auth.getSession();
+  if (data.session) return; // visitas com sessão de admin iniciada não contam
+  await supabase.from("page_views").insert({ path });
+}
+
+export async function fetchPageViews(days: number): Promise<PageView[]> {
+  if (!supabase) return [];
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const { data, error } = await supabase
+    .from("page_views")
+    .select("path, created_at")
+    .gte("created_at", since)
+    .order("created_at", { ascending: true })
+    .limit(10000);
+  if (error) throw error;
+  return (data ?? []) as PageView[];
+}
+
+export async function fetchTotalViews(): Promise<number> {
+  if (!supabase) return 0;
+  const { count, error } = await supabase.from("page_views").select("id", { head: true, count: "exact" });
+  if (error) throw error;
+  return count ?? 0;
 }
 
 // ---------------- definições do site (chave/valor) ----------------

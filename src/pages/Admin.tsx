@@ -8,9 +8,13 @@ import {
   deleteMessage as deleteMessageRemote,
   deleteProject as deleteProjectRemote,
   fetchMessages,
+  fetchPageViews,
+  fetchTotalViews,
   markAllMessagesRead,
+  saveProjectOrder,
   setMessageRead,
   setSetting,
+  type PageView,
   uploadThumb,
   upsertProject,
   useProjects,
@@ -30,7 +34,7 @@ const SUBJECT_LABELS: Record<string, string> = {
   outro: "Outro",
 };
 
-type View = "list" | "edit" | "new" | "messages" | "cv";
+type View = "list" | "edit" | "new" | "messages" | "cv" | "stats";
 
 // ---------- login ----------
 // fallback local: hash SHA-256 das credenciais do .env.local
@@ -231,6 +235,21 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
     }
   };
 
+  // troca o projeto com o vizinho e grava a ordem completa (position = índice)
+  const move = async (p: Project, dir: -1 | 1) => {
+    const i = projects.findIndex((x) => x.id === p.id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= projects.length) return;
+    const next = [...projects];
+    [next[i], next[j]] = [next[j], next[i]];
+    try {
+      await saveProjectOrder(next);
+      refresh();
+    } catch {
+      showToast("Não foi possível reordenar — tentar novamente");
+    }
+  };
+
   const remove = async (p: Project) => {
     if (!confirm(`Eliminar “${p.title}”? Esta ação não pode ser revertida.`)) return;
     try {
@@ -259,7 +278,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }} className="mono">
           <Logo size={22} />
           <span style={{ fontSize: 12, color: "var(--fg-4)" }}>
-            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "messages" ? "mensagens" : view === "cv" ? "cv" : `a editar · ${editing?.slug}`}
+            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "messages" ? "mensagens" : view === "cv" ? "cv" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -283,6 +302,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           <SidebarItem icon="layers" label="projetos" count={projects.length} active={view === "list" || view === "edit" || view === "new"} onClick={() => setView("list")} />
           <SidebarItem icon="command" label="mensagens" count={unreadCount > 0 ? unreadCount : messages.length} highlight={unreadCount > 0} active={view === "messages"} onClick={() => setView("messages")} />
           <SidebarItem icon="download" label="cv" active={view === "cv"} onClick={() => setView("cv")} />
+          <SidebarItem icon="zap" label="estatísticas" active={view === "stats"} onClick={() => setView("stats")} />
 
           <DbStatus projects={projects.length} messages={messages.length} unread={unreadCount} />
         </aside>
@@ -290,7 +310,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         {/* conteúdo */}
         <main style={{ overflow: "auto", padding: "32px 36px", background: "var(--bg)" }}>
           {view === "list" && (
-            <ListView projects={filtered} totalCount={projects.length} hiddenCount={hiddenCount} showHidden={showHidden} setShowHidden={setShowHidden} search={search} setSearch={setSearch} onEdit={startEdit} onNew={startNew} onDelete={remove} onToggleVisibility={toggleVisibility} />
+            <ListView projects={filtered} totalCount={projects.length} hiddenCount={hiddenCount} showHidden={showHidden} setShowHidden={setShowHidden} search={search} setSearch={setSearch} onEdit={startEdit} onNew={startNew} onDelete={remove} onToggleVisibility={toggleVisibility} onMove={move} canReorder={!search} />
           )}
           {(view === "edit" || view === "new") && (
             <EditView project={editing} onSave={save} onCancel={() => setView("list")} isNew={view === "new"} />
@@ -299,12 +319,146 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
             <MessagesView messages={messages} onRead={markRead} onMarkAllRead={markAllRead} onDelete={deleteMsg} unreadCount={unreadCount} />
           )}
           {view === "cv" && <CvView />}
+          {view === "stats" && <StatsView />}
         </main>
       </div>
 
       {toast && (
         <div style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", background: "var(--bg-2)", border: "1px solid var(--line-strong)", borderRadius: "var(--r-md)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.5)", animation: "fadeUp 220ms var(--ease-out)", fontSize: 13 }}>
           <Icon name="check" size={14} style={{ color: "var(--success)" }} /> {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- estatísticas ----------
+
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function StatsView() {
+  const [total, setTotal] = useState<number | null>(null);
+  const [views, setViews] = useState<PageView[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(false);
+    Promise.all([fetchTotalViews(), fetchPageViews(30)])
+      .then(([t, v]) => { if (alive) { setTotal(t); setViews(v); } })
+      .catch(() => { if (alive) setError(true); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [tick]);
+
+  // agregações: por dia (14 dias), últimos 7 dias, hoje e páginas mais vistas
+  const days: { key: string; label: string; count: number }[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push({ key: dayKey(d), label: String(d.getDate()), count: 0 });
+  }
+  const byDay = new Map(days.map((d) => [d.key, d]));
+  const todayKey = dayKey(new Date());
+  const since7 = Date.now() - 7 * 86400000;
+  let last7 = 0;
+  let today = 0;
+  const byPath = new Map<string, number>();
+  for (const v of views) {
+    const dt = new Date(v.created_at);
+    const slot = byDay.get(dayKey(dt));
+    if (slot) slot.count++;
+    if (dt.getTime() >= since7) last7++;
+    if (dayKey(dt) === todayKey) today++;
+    byPath.set(v.path, (byPath.get(v.path) || 0) + 1);
+  }
+  const topPages = [...byPath.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const maxDay = Math.max(1, ...days.map((d) => d.count));
+  const maxPath = Math.max(1, ...topPages.map(([, c]) => c));
+
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>/estatísticas</div>
+          <h2 style={{ margin: 0, fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em" }}>Visitas</h2>
+        </div>
+        <button className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={() => setTick(tick + 1)} disabled={loading}>
+          {loading ? "a atualizar…" : "atualizar"}
+        </button>
+      </div>
+
+      {!supabaseConfigured && (
+        <div style={{ color: "var(--fg-2)", fontSize: 14 }}>Modo local — as estatísticas precisam da base de dados.</div>
+      )}
+      {supabaseConfigured && error && (
+        <div style={{ color: "var(--danger)", fontSize: 13 }}>
+          Sem acesso às visitas — confirmar a migração de estatísticas no Supabase.
+        </div>
+      )}
+
+      {supabaseConfigured && !error && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+            {([["hoje", today], ["últimos 7 dias", last7], ["desde sempre", total ?? 0]] as const).map(([label, value]) => (
+              <div key={label} style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
+                <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+                <div style={{ fontSize: 30, fontWeight: 300, letterSpacing: "-0.02em" }}>{loading ? "…" : value}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
+            <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>
+              visitas por dia — últimos 14 dias
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120 }}>
+              {days.map((d) => (
+                <div key={d.key} title={`${d.count} visita${d.count === 1 ? "" : "s"} · dia ${d.label}`} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", cursor: "default" }}>
+                  <div style={{ height: `${Math.max(2, (d.count / maxDay) * 100)}%`, minHeight: 2, background: d.count > 0 ? "var(--accent)" : "var(--bg-3)", borderRadius: "3px 3px 0 0", transition: "height 240ms var(--ease-out)" }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
+              {days.map((d, i) => (
+                <div key={d.key} className="mono" style={{ flex: 1, textAlign: "center", fontSize: 9, color: "var(--fg-4)" }}>
+                  {i % 2 === 0 ? d.label : ""}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "18px 20px" }}>
+            <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>
+              páginas mais vistas — últimos 30 dias
+            </div>
+            {topPages.length === 0 && !loading && (
+              <div style={{ fontSize: 13, color: "var(--fg-3)" }}>Ainda sem visitas registadas.</div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {topPages.map(([path, count]) => (
+                <div key={path} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "center" }}>
+                  <div>
+                    <div className="mono" style={{ fontSize: 12, color: "var(--fg-2)", marginBottom: 4 }}>{path === "/" ? "/ (início)" : path}</div>
+                    <div style={{ height: 4, background: "var(--bg-3)", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ width: `${(count / maxPath) * 100}%`, height: "100%", background: "var(--accent)", borderRadius: 2 }} />
+                    </div>
+                  </div>
+                  <div className="mono" style={{ fontSize: 12, color: "var(--fg)" }}>{count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mono" style={{ fontSize: 10.5, color: "var(--fg-4)", lineHeight: 1.5 }}>
+            sem cookies nem dados pessoais — cada página vista é uma linha (caminho + data);
+            visitas com sessão de admin iniciada não contam
+          </div>
         </div>
       )}
     </div>
@@ -453,12 +607,13 @@ function SidebarItem({ icon, label, count, active, onClick, highlight }: { icon:
 
 // ---------- lista de projetos ----------
 
-function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden, search, setSearch, onEdit, onNew, onDelete, onToggleVisibility }: {
+function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden, search, setSearch, onEdit, onNew, onDelete, onToggleVisibility, onMove, canReorder }: {
   projects: Project[]; totalCount: number; hiddenCount: number;
   showHidden: boolean; setShowHidden: (v: boolean) => void;
   search: string; setSearch: (v: string) => void;
   onEdit: (p: Project) => void; onNew: () => void; onDelete: (p: Project) => void;
   onToggleVisibility: (p: Project) => void;
+  onMove: (p: Project, dir: -1 | 1) => void; canReorder: boolean;
 }) {
   return (
     <div>
@@ -491,7 +646,7 @@ function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden
       </div>
 
       <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden" }}>
-        <div className="mono" style={{ display: "grid", gridTemplateColumns: "32px 2.4fr 1fr 1.4fr 0.9fr 110px", gap: 16, padding: "12px 18px", borderBottom: "1px solid var(--line)", color: "var(--fg-4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+        <div className="mono" style={{ display: "grid", gridTemplateColumns: "32px 2.4fr 1fr 1.4fr 0.9fr 160px", gap: 16, padding: "12px 18px", borderBottom: "1px solid var(--line)", color: "var(--fg-4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" }}>
           <span></span>
           <span>título</span>
           <span>ano · função</span>
@@ -500,7 +655,7 @@ function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden
           <span></span>
         </div>
         {projects.map((p, i) => (
-          <ProjectRow key={p.id} project={p} onEdit={onEdit} onDelete={onDelete} onToggleVisibility={onToggleVisibility} last={i === projects.length - 1} />
+          <ProjectRow key={p.id} project={p} onEdit={onEdit} onDelete={onDelete} onToggleVisibility={onToggleVisibility} last={i === projects.length - 1} onMove={onMove} canReorder={canReorder} isFirst={i === 0} isLast={i === projects.length - 1} />
         ))}
         {projects.length === 0 && (
           <div style={{ padding: 60, textAlign: "center", color: "var(--fg-3)" }}>
@@ -520,7 +675,7 @@ function pickPt(v: Project["role"] | undefined): string {
   return typeof v === "object" ? (v.pt ?? v.en ?? "") : v;
 }
 
-function ProjectRow({ project, onEdit, onDelete, onToggleVisibility, last }: { project: Project; onEdit: (p: Project) => void; onDelete: (p: Project) => void; onToggleVisibility: (p: Project) => void; last: boolean }) {
+function ProjectRow({ project, onEdit, onDelete, onToggleVisibility, last, onMove, canReorder, isFirst, isLast }: { project: Project; onEdit: (p: Project) => void; onDelete: (p: Project) => void; onToggleVisibility: (p: Project) => void; last: boolean; onMove: (p: Project, dir: -1 | 1) => void; canReorder: boolean; isFirst: boolean; isLast: boolean }) {
   const [hover, setHover] = useState(false);
   const isHidden = project.status === "hidden";
   return (
@@ -528,7 +683,7 @@ function ProjectRow({ project, onEdit, onDelete, onToggleVisibility, last }: { p
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={() => onEdit(project)}
-      style={{ display: "grid", gridTemplateColumns: "32px 2.4fr 1fr 1.4fr 0.9fr 110px", gap: 16, padding: "16px 18px", borderBottom: last ? "none" : "1px solid var(--line)", background: hover ? "var(--bg-2)" : "transparent", cursor: "pointer", alignItems: "center", transition: "background 120ms var(--ease-out)", opacity: isHidden ? 0.62 : 1 }}
+      style={{ display: "grid", gridTemplateColumns: "32px 2.4fr 1fr 1.4fr 0.9fr 160px", gap: 16, padding: "16px 18px", borderBottom: last ? "none" : "1px solid var(--line)", background: hover ? "var(--bg-2)" : "transparent", cursor: "pointer", alignItems: "center", transition: "background 120ms var(--ease-out)", opacity: isHidden ? 0.62 : 1 }}
     >
       <div style={{ width: 24, height: 24, borderRadius: 4, background: "var(--bg-2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ width: 8, height: 8, borderRadius: 999, background: project.accent, boxShadow: `0 0 8px ${project.accent}` }} />
@@ -550,6 +705,16 @@ function ProjectRow({ project, onEdit, onDelete, onToggleVisibility, last }: { p
         <span className="mono" style={{ fontSize: 11, color: "var(--fg-2)" }}>{isHidden ? "oculto" : "publicado"}</span>
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 4, opacity: hover ? 1 : 0.5, transition: "opacity 140ms var(--ease-out)" }}>
+        {canReorder && (
+          <>
+            <button className="btn btn-icon" disabled={isFirst} style={{ opacity: isFirst ? 0.3 : 1 }} onClick={(e) => { e.stopPropagation(); onMove(project, -1); }} title="subir na grelha">
+              <Icon name="chevronLeft" size={13} style={{ transform: "rotate(90deg)" }} />
+            </button>
+            <button className="btn btn-icon" disabled={isLast} style={{ opacity: isLast ? 0.3 : 1 }} onClick={(e) => { e.stopPropagation(); onMove(project, 1); }} title="descer na grelha">
+              <Icon name="chevronLeft" size={13} style={{ transform: "rotate(-90deg)" }} />
+            </button>
+          </>
+        )}
         <button className="btn btn-icon" onClick={(e) => { e.stopPropagation(); onToggleVisibility(project); }} title={isHidden ? "publicar" : "ocultar"}>
           <Icon name="eye" size={13} />
         </button>

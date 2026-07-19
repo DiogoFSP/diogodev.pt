@@ -27,6 +27,7 @@ export type Project = {
   course: Localized;
   image?: string | null;
   gallery?: string[] | null;
+  position?: number | null;
   team?: string[] | null;
   story?: StoryStep[] | null;
   build?: BuildPoint[] | null;
