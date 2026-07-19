@@ -57,6 +57,16 @@ export async function upsertProject(p: Project): Promise<void> {
   saveLocalProjects(list);
 }
 
+// upload de imagem para o bucket "thumbs"; devolve o URL público
+export async function uploadThumb(file: File, slug: string): Promise<string> {
+  if (!supabase) throw new Error("upload requer Supabase configurado");
+  const ext = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `${slug}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("thumbs").upload(path, file, { upsert: true });
+  if (error) throw error;
+  return supabase.storage.from("thumbs").getPublicUrl(path).data.publicUrl;
+}
+
 export async function deleteProject(id: string): Promise<void> {
   if (supabase) {
     const { error } = await supabase.from("projects").delete().eq("id", id);

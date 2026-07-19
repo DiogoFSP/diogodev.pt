@@ -25,9 +25,10 @@ export type Project = {
   github: string | null;
   demo: string | null;
   course: Localized;
-  team?: string[];
-  story?: StoryStep[];
-  build?: BuildPoint[];
+  image?: string | null;
+  team?: string[] | null;
+  story?: StoryStep[] | null;
+  build?: BuildPoint[] | null;
 };
 
 export function loc(v: Localized, lang: Lang): string {

@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
-import { THUMBS } from "../components/thumbs";
+import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project as ProjectData } from "../data";
 import { useProjects } from "../projectsStore";
 import { useLang } from "../lang";
@@ -29,8 +29,6 @@ export default function Project() {
     );
   }
 
-  const Thumb = THUMBS[project.id];
-
   return (
     <main style={{ animation: "fadeIn 380ms var(--ease-out)" }}>
       {/* voltar */}
@@ -46,7 +44,7 @@ export default function Project() {
         </Link>
       </div>
 
-      <Header project={project} Thumb={Thumb} />
+      <Header project={project} />
       <MetricsStrip project={project} />
 
       {project.story && <StorySection project={project} />}
@@ -59,7 +57,7 @@ export default function Project() {
   );
 }
 
-function Header({ project, Thumb }: { project: ProjectData; Thumb?: React.FC }) {
+function Header({ project }: { project: ProjectData }) {
   const { t, lang } = useLang();
   return (
     <section style={{ padding: "32px 0 48px" }}>
@@ -92,7 +90,9 @@ function Header({ project, Thumb }: { project: ProjectData; Thumb?: React.FC }) 
 
         {/* miniatura */}
         <div className="project-thumb" style={{ position: "relative", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--bg-1)" }}>
-          <div style={{ position: "absolute", inset: 0 }}>{Thumb && <Thumb />}</div>
+          <div style={{ position: "absolute", inset: 0 }}>
+            <ProjectThumb id={project.id} image={project.image} alt={project.title} />
+          </div>
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(60% 60% at 80% 20%, ${project.accent}22, transparent 60%)`, pointerEvents: "none" }} />
           <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 5 }}>
             <span style={{ width: 9, height: 9, borderRadius: 999, background: "var(--bg-3)" }} />
@@ -208,7 +208,6 @@ function UpNext({ current }: { current: ProjectData }) {
           {t("a seguir", "up next")}
         </div>
         {others.map((p) => {
-          const Thumb = THUMBS[p.id];
           return (
             <article
               key={p.id}
@@ -217,7 +216,7 @@ function UpNext({ current }: { current: ProjectData }) {
               style={{ padding: 16, border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", cursor: "pointer", marginBottom: 12 }}
             >
               <div style={{ height: 80, borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--line)" }}>
-                {Thumb && <Thumb />}
+                <ProjectThumb id={p.id} image={p.image} alt={p.title} />
               </div>
               <div>
                 <h3 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em" }}>{p.title}</h3>

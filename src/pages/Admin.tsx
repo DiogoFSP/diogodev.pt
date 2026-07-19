@@ -10,10 +10,12 @@ import {
   fetchMessages,
   markAllMessagesRead,
   setMessageRead,
+  uploadThumb,
   upsertProject,
   useProjects,
   type Message,
 } from "../projectsStore";
+import { ProjectThumb } from "../components/thumbs";
 import { supabase, supabaseConfigured } from "../supabase";
 
 // Admin: projetos e mensagens via projectsStore; auth Supabase quando
@@ -190,13 +192,17 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           summary: data.summary,
           tagline: data.tagline,
           tags: data.tags,
-          metrics: [],
-          accent: "#E5E5E7",
-          featured: "small",
+          metrics: data.metrics,
+          accent: data.accent,
+          featured: data.featured,
           status: data.status,
           github: data.github || null,
           demo: data.demo || null,
           course: data.course,
+          image: data.image,
+          team: data.team,
+          story: data.story,
+          build: data.build,
         };
         await upsertProject(np);
         showToast(`Criado “${data.title}” · ${data.status === "hidden" ? "oculto" : "publicado"}`);
@@ -488,15 +494,29 @@ type EditFormData = {
   title: string;
   slug: string;
   year: string;
-  role: string;
-  tagline: string;
-  summary: string;
+  role: Project["role"];
+  tagline: Project["tagline"];
+  summary: Project["summary"];
   tags: string[];
   github: string;
   demo: string;
-  course: string;
+  course: Project["course"];
   status: "published" | "hidden";
+  featured: Project["featured"];
+  accent: string;
+  image: string | null;
+  metrics: Project["metrics"];
+  team: string[] | null;
+  story: Project["story"];
+  build: Project["build"];
 };
+
+// se o texto PT não mudou, mantém o valor original (preserva a versão EN)
+function keepLoc(original: Project["role"] | undefined, edited: string): Project["role"] {
+  const e = edited.trim();
+  if (original != null && pickPt(original).trim() === e) return original;
+  return e;
+}
 
 function EditView({ project, onSave, onCancel, isNew }: { project: Project | null; onSave: (d: EditFormData) => void; onCancel: () => void; isNew: boolean }) {
   const [form, setForm] = useState({
@@ -511,14 +531,122 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
     demo: project?.demo || "",
     course: pickPt(project?.course) || "",
     status: (project?.status || (isNew ? "hidden" : "published")) as "published" | "hidden",
+    featured: (project?.featured || "small") as Project["featured"],
+    accent: project?.accent || "#E5E5E7",
+    image: (project?.image ?? null) as string | null,
+    team: project?.team?.join(", ") || "",
+    metrics: (project?.metrics || []).map((m) => ({ label: pickPt(m.label), value: pickPt(m.value) })),
+    story: (project?.story || []).map((s) => ({ kind: pickPt(s.kind), title: pickPt(s.title), body: pickPt(s.body) })),
+    build: (project?.build || []).map((b) => ({ title: pickPt(b.title), body: pickPt(b.body) })),
   });
 
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm({ ...form, [k]: v });
 
+  const [uploading, setUploading] = useState(false);
+  const [imgError, setImgError] = useState<string | null>(null);
+  const [svgOpen, setSvgOpen] = useState(false);
+  const [svgCode, setSvgCode] = useState("");
+
+  const slugAtual = () =>
+    form.slug.trim() || form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "projeto";
+
+  const enviarFicheiro = async (file: File) => {
+    setUploading(true);
+    setImgError(null);
+    try {
+      const url = await uploadThumb(file, slugAtual());
+      update("image", url);
+      return true;
+    } catch {
+      setImgError("Não foi possível carregar — confirmar a migração de imagens no Supabase.");
+      return false;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onPickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) { setImgError("Máximo 4 MB."); return; }
+    await enviarFicheiro(file);
+  };
+
+  // código SVG colado -> guardado como ficheiro .svg no Storage e servido
+  // como <img> (animações funcionam; scripts nunca correm nesse contexto)
+  const usarSvgColado = async () => {
+    const code = svgCode.trim();
+    if (!code.toLowerCase().startsWith("<svg")) { setImgError("O código tem de começar por <svg."); return; }
+    const file = new File([code], `${slugAtual()}.svg`, { type: "image/svg+xml" });
+    if (await enviarFicheiro(file)) {
+      setSvgCode("");
+      setSvgOpen(false);
+    }
+  };
+
+  // helpers para as listas dinâmicas
+  const updRow = <T,>(list: T[], i: number, patch: Partial<T>): T[] =>
+    list.map((row, j) => (j === i ? { ...row, ...patch } : row));
+  const delRow = <T,>(list: T[], i: number): T[] => list.filter((_, j) => j !== i);
+
   const submit = () => {
     if (!form.title.trim()) return;
     const slug = form.slug.trim() || form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    onSave({ ...form, slug, tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean) });
+
+    const metrics = form.metrics
+      .filter((m) => m.label.trim() && m.value.trim())
+      .map((m, i) => {
+        const o = project?.metrics?.[i];
+        return {
+          label: o && pickPt(o.label).trim() === m.label.trim() ? o.label : m.label.trim(),
+          value: o && pickPt(o.value).trim() === m.value.trim() ? o.value : m.value.trim(),
+        };
+      });
+
+    const story = form.story
+      .filter((s) => s.title.trim() || s.body.trim())
+      .map((s, i) => {
+        const o = project?.story?.[i];
+        return {
+          kind: o && pickPt(o.kind).trim() === s.kind.trim() ? o.kind : s.kind.trim(),
+          title: o && pickPt(o.title).trim() === s.title.trim() ? o.title : s.title.trim(),
+          body: o && pickPt(o.body).trim() === s.body.trim() ? o.body : s.body.trim(),
+        };
+      });
+
+    const build = form.build
+      .filter((b) => b.title.trim() || b.body.trim())
+      .map((b, i) => {
+        const o = project?.build?.[i];
+        return {
+          title: o && pickPt(o.title).trim() === b.title.trim() ? o.title : b.title.trim(),
+          body: o && pickPt(o.body).trim() === b.body.trim() ? o.body : b.body.trim(),
+        };
+      });
+
+    const team = form.team.split(",").map((t) => t.trim()).filter(Boolean);
+
+    onSave({
+      title: form.title.trim(),
+      slug,
+      year: form.year,
+      status: form.status,
+      github: form.github,
+      demo: form.demo,
+      featured: form.featured,
+      accent: form.accent,
+      image: form.image,
+      tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
+      role: keepLoc(project?.role, form.role),
+      tagline: keepLoc(project?.tagline, form.tagline),
+      summary: keepLoc(project?.summary, form.summary),
+      course: keepLoc(project?.course, form.course),
+      metrics,
+      team: team.length ? team : null,
+      story: story.length ? story : null,
+      build: build.length ? build : null,
+    });
   };
 
   return (
@@ -597,26 +725,181 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
             </AField>
           </FormSection>
 
+          <FormSection title="aparência do cartão">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              {([["tall", "alto", "1 col × 2 linhas"], ["wide", "largo", "2 colunas"], ["small", "pequeno", "1 × 1"]] as const).map(([v, label, sub]) => {
+                const active = form.featured === v;
+                return (
+                  <button key={v} type="button" onClick={() => update("featured", v)} style={{ background: active ? "var(--bg-2)" : "var(--bg-1)", border: `1px solid ${active ? "var(--accent)" : "var(--line)"}`, borderRadius: "var(--r-md)", padding: "12px 10px", cursor: "pointer", color: active ? "var(--fg)" : "var(--fg-3)", textAlign: "center", transition: "all 140ms var(--ease-out)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
+                    <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", marginTop: 4 }}>{sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+            <AField label="cor de destaque" hint="brilho e detalhes do cartão">
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <input type="color" value={form.accent} onChange={(e) => update("accent", e.target.value)} style={{ width: 42, height: 34, padding: 2, background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-sm)", cursor: "pointer" }} />
+                <input className="input mono" value={form.accent} onChange={(e) => update("accent", e.target.value)} style={{ width: 120 }} />
+              </div>
+            </AField>
+          </FormSection>
+
+          <FormSection title="imagem">
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ width: 128, height: 92, borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--line)", background: "var(--bg-1)", flexShrink: 0 }}>
+                <ProjectThumb id={project?.id || ""} image={form.image} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <label className="btn" style={{ cursor: uploading ? "wait" : "pointer", opacity: uploading ? 0.7 : 1 }}>
+                    <Icon name="upload" size={14} /> {uploading ? "a carregar…" : "carregar imagem"}
+                    <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" style={{ display: "none" }} onChange={onPickImage} disabled={uploading} />
+                  </label>
+                  <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={() => setSvgOpen(!svgOpen)}>
+                    <Icon name="code" size={12} /> {svgOpen ? "fechar editor SVG" : "colar código SVG"}
+                  </button>
+                </div>
+                {svgOpen && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <textarea
+                      className="textarea"
+                      value={svgCode}
+                      onChange={(e) => setSvgCode(e.target.value)}
+                      rows={6}
+                      placeholder={'<svg viewBox="0 0 180 160" xmlns="http://www.w3.org/2000/svg">…</svg>'}
+                    />
+                    <button type="button" className="btn" style={{ alignSelf: "flex-start" }} onClick={usarSvgColado} disabled={uploading || !svgCode.trim()}>
+                      <Icon name="check" size={13} /> usar este SVG
+                    </button>
+                  </div>
+                )}
+                {form.image && (
+                  <button type="button" className="btn btn-ghost mono" style={{ alignSelf: "flex-start", fontSize: 11 }} onClick={() => update("image", null)}>
+                    <Icon name="trash" size={12} /> remover (volta à ilustração em código)
+                  </button>
+                )}
+                {imgError && <div style={{ color: "var(--danger)", fontSize: 12 }}>{imgError}</div>}
+                <div className="mono" style={{ fontSize: 10.5, color: "var(--fg-4)", lineHeight: 1.5 }}>
+                  png · jpg · webp · svg até 4 MB — fica no Supabase Storage; SVGs mantêm animações
+                </div>
+              </div>
+            </div>
+          </FormSection>
+
+          <FormSection title="métricas do cartão">
+            {form.metrics.map((m, i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 34px", gap: 10, alignItems: "center" }}>
+                <input className="input" value={m.label} onChange={(e) => update("metrics", updRow(form.metrics, i, { label: e.target.value }))} placeholder="rótulo (ex.: nota final)" />
+                <input className="input mono" value={m.value} onChange={(e) => update("metrics", updRow(form.metrics, i, { value: e.target.value }))} placeholder="valor (ex.: 94 / 100)" />
+                <button type="button" className="btn btn-icon" title="remover" onClick={() => update("metrics", delRow(form.metrics, i))}>
+                  <Icon name="trash" size={13} />
+                </button>
+              </div>
+            ))}
+            {form.metrics.length < 3 && (
+              <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11, alignSelf: "flex-start" }} onClick={() => update("metrics", [...form.metrics, { label: "", value: "" }])}>
+                <Icon name="plus" size={12} /> adicionar métrica
+              </button>
+            )}
+          </FormSection>
+
+          <FormSection title="equipa">
+            <AField label="membros" hint="nomes separados por vírgulas; vazio = sem secção">
+              <input className="input" value={form.team} onChange={(e) => update("team", e.target.value)} placeholder="Diogo Pinto, Rafael Marques" />
+            </AField>
+          </FormSection>
+
+          <FormSection title="história — página do projeto">
+            {form.story.map((s, i) => (
+              <div key={i} style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: 14, display: "flex", flexDirection: "column", gap: 10, position: "relative" }}>
+                <button type="button" className="btn btn-icon" title="remover passo" onClick={() => update("story", delRow(form.story, i))} style={{ position: "absolute", top: 10, right: 10 }}>
+                  <Icon name="trash" size={13} />
+                </button>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 10, paddingRight: 40 }}>
+                  <input className="input mono" value={s.kind} onChange={(e) => update("story", updRow(form.story, i, { kind: e.target.value }))} placeholder="etiqueta (ex.: o desafio)" />
+                  <input className="input" value={s.title} onChange={(e) => update("story", updRow(form.story, i, { title: e.target.value }))} placeholder="título do passo" />
+                </div>
+                <textarea className="textarea" value={s.body} onChange={(e) => update("story", updRow(form.story, i, { body: e.target.value }))} rows={3} style={{ fontFamily: "var(--font-display)", fontSize: 13 }} placeholder="texto do passo" />
+              </div>
+            ))}
+            <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11, alignSelf: "flex-start" }} onClick={() => update("story", [...form.story, { kind: "", title: "", body: "" }])}>
+              <Icon name="plus" size={12} /> adicionar passo
+            </button>
+          </FormSection>
+
+          <FormSection title="como está feito — página do projeto">
+            {form.build.map((b, i) => (
+              <div key={i} style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: 14, display: "flex", flexDirection: "column", gap: 10, position: "relative" }}>
+                <button type="button" className="btn btn-icon" title="remover ponto" onClick={() => update("build", delRow(form.build, i))} style={{ position: "absolute", top: 10, right: 10 }}>
+                  <Icon name="trash" size={13} />
+                </button>
+                <input className="input" value={b.title} onChange={(e) => update("build", updRow(form.build, i, { title: e.target.value }))} placeholder="título (ex.: Máquina de estados)" style={{ marginRight: 40 }} />
+                <textarea className="textarea" value={b.body} onChange={(e) => update("build", updRow(form.build, i, { body: e.target.value }))} rows={3} style={{ fontFamily: "var(--font-display)", fontSize: 13 }} placeholder="descrição" />
+              </div>
+            ))}
+            <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11, alignSelf: "flex-start" }} onClick={() => update("build", [...form.build, { title: "", body: "" }])}>
+              <Icon name="plus" size={12} /> adicionar ponto
+            </button>
+          </FormSection>
+
           <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", lineHeight: 1.6 }}>
-            nota: os textos editados aqui ficam iguais em PT e EN.
+            nota: textos editados ficam iguais em PT e EN; campos não alterados
+            mantêm a tradução existente.
           </div>
         </div>
 
         {/* pré-visualização do cartão */}
         <aside style={{ position: "sticky", top: 32, alignSelf: "start" }}>
           <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12 }}>pré-visualização do cartão</div>
-          <div style={{ background: "var(--bg-1)", border: `1px solid ${form.status === "hidden" ? "var(--warn)" : "var(--line)"}`, borderRadius: "var(--r-lg)", padding: 18, opacity: form.status === "hidden" ? 0.7 : 1 }}>
-            <div className="mono" style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
-              <span>{form.year || "—"} · {form.role || "—"}</span>
-              {form.status === "hidden" && <span style={{ color: "var(--warn)" }}>oculto</span>}
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.title || "Sem título"}</div>
-            <div style={{ fontSize: 12, color: "var(--fg-2)", marginTop: 6, marginBottom: 12 }}>{form.tagline || "—"}</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {form.tags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 4).map((t) => (
-                <span key={t} className="tag">{t}</span>
-              ))}
-            </div>
+          {(() => {
+            const metricsFilled = form.metrics.filter((m) => m.label.trim() && m.value.trim());
+            const teamNames = form.team.split(",").map((t) => t.trim()).filter(Boolean);
+            return (
+              <div style={{ background: "var(--bg-1)", border: `1px solid ${form.status === "hidden" ? "var(--warn)" : "var(--line)"}`, borderRadius: "var(--r-lg)", overflow: "hidden", opacity: form.status === "hidden" ? 0.7 : 1, boxShadow: `0 0 0 1px ${form.accent}22, 0 0 24px ${form.accent}18` }}>
+                <div style={{ height: 110, borderBottom: "1px solid var(--line)", position: "relative", background: "var(--bg-2)" }}>
+                  <ProjectThumb id={project?.id || ""} image={form.image} />
+                  <span className="mono" style={{ position: "absolute", top: 8, right: 8, fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "var(--glass)", backdropFilter: "blur(6px)", border: "1px solid var(--line)", color: "var(--fg-2)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    {form.featured === "tall" ? "alto" : form.featured === "wide" ? "largo" : "pequeno"}
+                  </span>
+                  {form.status === "hidden" && (
+                    <span className="mono" style={{ position: "absolute", top: 8, left: 8, fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "var(--glass)", border: "1px solid var(--warn)", color: "var(--warn)", textTransform: "uppercase", letterSpacing: "0.08em" }}>oculto</span>
+                  )}
+                </div>
+                <div style={{ padding: 14 }}>
+                  <div className="mono" style={{ fontSize: 10, color: "var(--fg-3)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: 999, background: form.accent, boxShadow: `0 0 6px ${form.accent}` }} />
+                    {form.year || "—"} · {form.role || "—"}
+                  </div>
+                  <div style={{ fontSize: 17, fontWeight: 500, letterSpacing: "-0.02em" }}>{form.title || "Sem título"}</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-2)", marginTop: 5, marginBottom: 10 }}>{form.tagline || "—"}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {form.tags.split(",").map((t) => t.trim()).filter(Boolean).slice(0, 4).map((t) => (
+                      <span key={t} className="tag">{t}</span>
+                    ))}
+                  </div>
+                  {metricsFilled.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: `repeat(${metricsFilled.length}, 1fr)`, gap: 8, marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+                      {metricsFilled.map((m, i) => (
+                        <div key={i}>
+                          <div className="mono" style={{ fontSize: 13, color: "var(--fg)" }}>{m.value}</div>
+                          <div className="mono" style={{ fontSize: 9, color: "var(--fg-4)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>{m.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {teamNames.length > 0 && (
+                    <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", marginTop: 10 }}>
+                      equipa: {teamNames.join(" · ")}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", marginTop: 12, lineHeight: 1.6 }}>
+            história: {form.story.filter((s) => s.title.trim() || s.body.trim()).length} passo(s) ·
+            arquitetura: {form.build.filter((b) => b.title.trim() || b.body.trim()).length} ponto(s)
           </div>
         </aside>
       </div>

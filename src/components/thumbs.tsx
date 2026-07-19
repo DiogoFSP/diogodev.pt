@@ -168,3 +168,13 @@ export const THUMBS: Record<string, FC> = {
   deepsea: ThumbDeepSea,
   portfolio: ThumbPortfolio,
 };
+
+// miniatura de um projeto: imagem carregada > SVG em código > bloco neutro
+export function ProjectThumb({ id, image, alt }: { id: string; image?: string | null; alt?: string }) {
+  if (image) {
+    return <img src={image} alt={alt || ""} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+  }
+  const Svg = THUMBS[id];
+  if (Svg) return <Svg />;
+  return <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, var(--bg-2), var(--bg-3))" }} />;
+}
