@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
-import { addMessage } from "../projectsStore";
+import { addMessage, sendConfirmation } from "../projectsStore";
 import { useLang } from "../lang";
 
 // Web3Forms — entrega das mensagens por email (a access key é pública)
@@ -113,6 +113,8 @@ export default function Contact() {
     // regista a mensagem (BD ou local) sem bloquear o envio por email
     try {
       await addMessage({ name: form.name.trim(), email: form.email.trim(), subject: form.subject.trim(), message: form.message.trim() });
+      // email de confirmação ao remetente, em segundo plano
+      sendConfirmation({ name: form.name.trim(), email: form.email.trim(), subject: form.subject.trim(), message: form.message.trim() });
     } catch { /* o email via Web3Forms continua a ser a entrega principal */ }
 
     if (FORM_CONFIGURED) {
