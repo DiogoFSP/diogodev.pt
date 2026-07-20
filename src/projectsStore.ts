@@ -240,29 +240,9 @@ export async function addMessage(m: { name: string; email: string; subject: stri
   saveLocalMessages(inbox);
 }
 
-export async function setMessageRead(id: number, read: boolean): Promise<void> {
-  if (supabase) {
-    const { error } = await supabase.from("messages").update({ read }).eq("id", id);
-    if (error) throw error;
-    return;
-  }
-  saveLocalMessages(loadLocalMessages().map((m) => (m.id === id ? { ...m, read } : m)));
-}
-
-export async function markAllMessagesRead(): Promise<void> {
-  if (supabase) {
-    const { error } = await supabase.from("messages").update({ read: true }).eq("read", false);
-    if (error) throw error;
-    return;
-  }
-  saveLocalMessages(loadLocalMessages().map((m) => ({ ...m, read: true })));
-}
-
-export async function deleteMessage(id: number): Promise<void> {
-  if (supabase) {
-    const { error } = await supabase.from("messages").delete().eq("id", id);
-    if (error) throw error;
-    return;
-  }
-  saveLocalMessages(loadLocalMessages().filter((m) => m.id !== id));
+// pede o email de confirmação ao visitante; nunca falha para quem chama
+// (a confirmação é um extra — o formulário não pode partir por causa dela)
+export function sendConfirmation(payload: { name: string; email: string; subject: string; message: string }): void {
+  if (!supabase) return;
+  supabase.functions.invoke("confirmar-mensagem", { body: payload }).catch(() => {});
 }

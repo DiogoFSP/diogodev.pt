@@ -1,18 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "../components/Icon";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import { type Project } from "../data";
 import {
-  deleteMessage as deleteMessageRemote,
   deleteProject as deleteProjectRemote,
   fetchMessages,
   fetchPageViews,
   fetchTotalViews,
-  markAllMessagesRead,
   saveProjectOrder,
-  setMessageRead,
   setSetting,
   type PageView,
   uploadThumb,
@@ -24,17 +21,10 @@ import {
 import { ProjectThumb } from "../components/thumbs";
 import { supabase, supabaseConfigured } from "../supabase";
 
-// Admin: projetos e mensagens via projectsStore; auth Supabase quando
-// configurado, senão fallback local.
+// Admin: projetos via projectsStore; auth Supabase quando configurado,
+// senão fallback local. As mensagens são lidas por email; aqui só contam.
 
-const SUBJECT_LABELS: Record<string, string> = {
-  geral: "Geral",
-  estagio: "Estágio",
-  projeto: "Projeto",
-  outro: "Outro",
-};
-
-type View = "list" | "edit" | "new" | "messages" | "cv" | "stats";
+type View = "list" | "edit" | "new" | "cv" | "stats";
 
 // ---------- login ----------
 // fallback local: hash SHA-256 das credenciais do .env.local
@@ -128,7 +118,9 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 220ms var(--ease-out)" }}>
       <form onSubmit={submit} style={{ width: 360, maxWidth: "90vw", background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: 28, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} className="mono">
-          <Logo size={22} />
+          <button type="button" onClick={() => navigate("/")} title="voltar ao site" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: "inherit" }}>
+            <Logo size={22} />
+          </button>
           <span style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>admin</span>
         </div>
         <AField label="email">
@@ -159,24 +151,15 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
   const [toast, setToast] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  useEffect(() => {
-    fetchMessages().then(setMessages).catch(() => setMessages([]));
+  // as mensagens são lidas por email; aqui servem só de contador
+  const loadMessages = useCallback(() => {
+    fetchMessages().then(setMessages).catch(() => {});
   }, []);
-
-  // atualiza backend e estado local em simultâneo
-  const markRead = (id: number) => {
-    setMessageRead(id, true).catch(() => {});
-    setMessages((ms) => ms.map((m) => (m.id === id ? { ...m, read: true } : m)));
-  };
-  const markAllRead = () => {
-    markAllMessagesRead().catch(() => {});
-    setMessages((ms) => ms.map((m) => ({ ...m, read: true })));
-  };
-  const deleteMsg = (id: number) => {
-    deleteMessageRemote(id).catch(() => {});
-    setMessages((ms) => ms.filter((m) => m.id !== id));
-  };
-  const unreadCount = messages.filter((m) => !m.read).length;
+  useEffect(() => {
+    loadMessages();
+    const id = setInterval(loadMessages, 30000);
+    return () => clearInterval(id);
+  }, [loadMessages]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -276,13 +259,15 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       {/* chrome do topo */}
       <div style={{ background: "var(--bg-1)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 52, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }} className="mono">
-          <Logo size={22} />
-          <span style={{ fontSize: 12, color: "var(--fg-4)" }}>
-            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "messages" ? "mensagens" : view === "cv" ? "cv" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
+          <button onClick={() => navigate("/")} title="voltar ao site" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: "inherit" }}>
+            <Logo size={22} />
+          </button>
+          <span className="hide-sm" style={{ fontSize: 12, color: "var(--fg-4)" }}>
+            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "cv" ? "cv" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span className="mono" style={{ fontSize: 11, color: "var(--fg-3)", display: "flex", alignItems: "center", gap: 6 }}>
+          <span className="mono hide-sm" style={{ fontSize: 11, color: "var(--fg-3)", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 6, height: 6, borderRadius: 999, background: supabaseConfigured ? "var(--success)" : "var(--warn)" }} />
             {supabaseConfigured ? "supabase · central" : "local · este browser"}
           </span>
@@ -296,27 +281,23 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", flex: 1, minHeight: 0 }}>
+      <div className="admin-shell">
         {/* sidebar */}
-        <aside style={{ background: "var(--bg-1)", borderRight: "1px solid var(--line)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+        <aside className="admin-side">
           <SidebarItem icon="layers" label="projetos" count={projects.length} active={view === "list" || view === "edit" || view === "new"} onClick={() => setView("list")} />
-          <SidebarItem icon="command" label="mensagens" count={unreadCount > 0 ? unreadCount : messages.length} highlight={unreadCount > 0} active={view === "messages"} onClick={() => setView("messages")} />
           <SidebarItem icon="download" label="cv" active={view === "cv"} onClick={() => setView("cv")} />
           <SidebarItem icon="zap" label="estatísticas" active={view === "stats"} onClick={() => setView("stats")} />
 
-          <DbStatus projects={projects.length} messages={messages.length} unread={unreadCount} />
+          <DbStatus projects={projects.length} messages={messages.length} />
         </aside>
 
         {/* conteúdo */}
-        <main style={{ overflow: "auto", padding: "32px 36px", background: "var(--bg)" }}>
+        <main className="admin-main">
           {view === "list" && (
             <ListView projects={filtered} totalCount={projects.length} hiddenCount={hiddenCount} showHidden={showHidden} setShowHidden={setShowHidden} search={search} setSearch={setSearch} onEdit={startEdit} onNew={startNew} onDelete={remove} onToggleVisibility={toggleVisibility} onMove={move} canReorder={!search} />
           )}
           {(view === "edit" || view === "new") && (
             <EditView project={editing} onSave={save} onCancel={() => setView("list")} isNew={view === "new"} />
-          )}
-          {view === "messages" && (
-            <MessagesView messages={messages} onRead={markRead} onMarkAllRead={markAllRead} onDelete={deleteMsg} unreadCount={unreadCount} />
           )}
           {view === "cv" && <CvView />}
           {view === "stats" && <StatsView />}
@@ -543,7 +524,7 @@ function CvView() {
 }
 
 // estado da BD medido com uma query real (latência incluída), a cada 30s
-function DbStatus({ projects, messages, unread }: { projects: number; messages: number; unread: number }) {
+function DbStatus({ projects, messages }: { projects: number; messages: number }) {
   const [ok, setOk] = useState<boolean | null>(null);
   const [ping, setPing] = useState<number | null>(null);
 
@@ -572,7 +553,6 @@ function DbStatus({ projects, messages, unread }: { projects: number; messages: 
         <div className="mono" style={{ fontSize: 11.5, color: "var(--fg-2)", lineHeight: 2 }}>
           <div>{ok === null ? "a verificar…" : ok ? <>ligada · <span style={{ color: "var(--success)" }}>{ping} ms</span></> : <span style={{ color: "var(--danger)" }}>sem ligação</span>}</div>
           <div>{projects} projeto{projects === 1 ? "" : "s"} · {messages} mensage{messages === 1 ? "m" : "ns"}</div>
-          {unread > 0 && <div style={{ color: "var(--accent)" }}>{unread} por ler</div>}
         </div>
       ) : (
         <div style={{ fontSize: 12.5, color: "var(--fg-2)", lineHeight: 1.5 }}>
@@ -646,7 +626,7 @@ function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden
       </div>
 
       <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden" }}>
-        <div className="mono" style={{ display: "grid", gridTemplateColumns: "32px 2.4fr 1fr 1.4fr 0.9fr 160px", gap: 16, padding: "12px 18px", borderBottom: "1px solid var(--line)", color: "var(--fg-4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+        <div className="mono admin-row" style={{ padding: "12px 18px", borderBottom: "1px solid var(--line)", color: "var(--fg-4)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase" }}>
           <span></span>
           <span>título</span>
           <span>ano · função</span>
@@ -683,7 +663,8 @@ function ProjectRow({ project, onEdit, onDelete, onToggleVisibility, last, onMov
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onClick={() => onEdit(project)}
-      style={{ display: "grid", gridTemplateColumns: "32px 2.4fr 1fr 1.4fr 0.9fr 160px", gap: 16, padding: "16px 18px", borderBottom: last ? "none" : "1px solid var(--line)", background: hover ? "var(--bg-2)" : "transparent", cursor: "pointer", alignItems: "center", transition: "background 120ms var(--ease-out)", opacity: isHidden ? 0.62 : 1 }}
+      className="admin-row"
+      style={{ padding: "16px 18px", borderBottom: last ? "none" : "1px solid var(--line)", background: hover ? "var(--bg-2)" : "transparent", cursor: "pointer", transition: "background 120ms var(--ease-out)", opacity: isHidden ? 0.62 : 1 }}
     >
       <div style={{ width: 24, height: 24, borderRadius: 4, background: "var(--bg-2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ width: 8, height: 8, borderRadius: 999, background: project.accent, boxShadow: `0 0 8px ${project.accent}` }} />
@@ -942,7 +923,7 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 28 }}>
+      <div className="admin-edit">
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <FormSection title="idioma dos textos">
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -1272,179 +1253,5 @@ function AField({ label, hint, icon, children }: { label: string; hint?: string;
       </div>
       {children}
     </label>
-  );
-}
-
-// ---------- inbox de mensagens ----------
-
-function MessagesView({ messages, onRead, onMarkAllRead, onDelete, unreadCount }: { messages: Message[]; onRead: (id: number) => void; onMarkAllRead: () => void; onDelete: (id: number) => void; unreadCount: number }) {
-  const [selectedId, setSelectedId] = useState<number | null>(messages[0]?.id ?? null);
-  const [filter, setFilter] = useState<"todas" | "naoLidas">("todas");
-
-  const list = filter === "naoLidas" ? messages.filter((m) => !m.read) : messages;
-  const selected = messages.find((m) => m.id === selectedId) || null;
-
-  const open = (m: Message) => {
-    setSelectedId(m.id);
-    if (!m.read) onRead(m.id);
-  };
-
-  const fmtDate = (iso: string) => {
-    const d = new Date(iso);
-    return d.toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" }) + " · " + d.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" });
-  };
-
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
-        <div>
-          <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>/mensagens</div>
-          <h2 style={{ margin: 0, fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em" }}>
-            {messages.length} mensage{messages.length === 1 ? "m" : "ns"}
-            {unreadCount > 0 && <span style={{ color: "var(--accent)", fontSize: 16, marginLeft: 12 }}>· {unreadCount} por ler</span>}
-          </h2>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <FilterPill active={filter === "todas"} onClick={() => setFilter("todas")}>todas · {messages.length}</FilterPill>
-          <FilterPill active={filter === "naoLidas"} onClick={() => setFilter("naoLidas")}>por ler · {unreadCount}</FilterPill>
-          {unreadCount > 0 && <button className="btn" onClick={onMarkAllRead}><Icon name="check" size={13} /> marcar todas lidas</button>}
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "var(--accent-soft)", border: "1px solid var(--accent)", borderRadius: "var(--r-md)", padding: "14px 16px", marginBottom: 20 }}>
-        <Icon name="check" size={15} style={{ color: "var(--accent)", marginTop: 1, flexShrink: 0 }} />
-        <div style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55 }}>
-          As mensagens novas chegam por <strong style={{ color: "var(--fg)" }}>email</strong> (via Web3Forms).{" "}
-          {supabaseConfigured
-            ? <>Este é o <strong style={{ color: "var(--fg)" }}>arquivo central</strong> — todas as mensagens do formulário ficam aqui, acessíveis em qualquer dispositivo.</>
-            : <>Esta lista mostra o histórico guardado <strong style={{ color: "var(--fg)" }}>neste browser</strong>.</>}
-        </div>
-      </div>
-
-      {messages.length === 0 ? (
-        <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: "80px 20px", textAlign: "center" }}>
-          <Icon name="command" size={24} style={{ color: "var(--fg-4)", marginBottom: 14 }} />
-          <div style={{ fontSize: 15, color: "var(--fg-2)", marginBottom: 6 }}>Ainda não há mensagens neste browser.</div>
-          <div className="mono" style={{ fontSize: 12, color: "var(--fg-4)" }}>As mensagens do formulário de contacto aparecem aqui.</div>
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", gap: 16, alignItems: "start" }}>
-          <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden" }}>
-            {list.map((m, i) => {
-              const active = m.id === selectedId;
-              return (
-                <button key={m.id} onClick={() => open(m)} style={{ display: "block", width: "100%", textAlign: "left", cursor: "pointer", padding: "16px 18px", border: 0, borderBottom: i < list.length - 1 ? "1px solid var(--line)" : "none", borderLeft: `2px solid ${active ? "var(--accent)" : "transparent"}`, background: active ? "var(--bg-2)" : "transparent", transition: "background 120ms var(--ease-out)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 5 }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                      {!m.read && <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--accent)", flexShrink: 0 }} />}
-                      <span style={{ fontSize: 14, fontWeight: m.read ? 400 : 600, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</span>
-                    </span>
-                    <span className="tag" style={{ flexShrink: 0, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>{SUBJECT_LABELS[m.subject] || m.subject}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--fg-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{m.message}</div>
-                  <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)" }}>{fmtDate(m.date)}</div>
-                </button>
-              );
-            })}
-            {list.length === 0 && (
-              <div style={{ padding: 40, textAlign: "center", color: "var(--fg-3)", fontSize: 13 }}>sem mensagens por ler</div>
-            )}
-          </div>
-
-          <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: 28, position: "sticky", top: 0, minHeight: 320 }}>
-            {selected ? (
-              <MessageDetail
-                key={selected.id}
-                m={selected}
-                fmtDate={fmtDate}
-                onDelete={() => {
-                  const id = selected.id;
-                  onDelete(id);
-                  setSelectedId(messages.filter((x) => x.id !== id)[0]?.id ?? null);
-                }}
-              />
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 280, color: "var(--fg-3)" }}>
-                <Icon name="command" size={22} style={{ marginBottom: 12, color: "var(--fg-4)" }} />
-                <div style={{ fontSize: 14 }}>Selecionar uma mensagem para ler.</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FilterPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} className="mono" style={{ fontSize: 11, padding: "7px 12px", borderRadius: 999, border: `1px solid ${active ? "var(--accent)" : "var(--line)"}`, background: active ? "var(--accent-soft)" : "var(--bg-1)", color: active ? "var(--fg)" : "var(--fg-3)", cursor: "pointer", transition: "all 140ms var(--ease-out)" }}>
-      {children}
-    </button>
-  );
-}
-
-function MessageDetail({ m, fmtDate, onDelete }: { m: Message; fmtDate: (iso: string) => string; onDelete: () => void }) {
-  const [composing, setComposing] = useState(false);
-  const [reply, setReply] = useState("");
-
-  // mailto já endereçado e com o corpo preenchido
-  const mailtoHref = `mailto:${m.email}?subject=${encodeURIComponent("Re: " + (SUBJECT_LABELS[m.subject] || "contacto"))}&body=${encodeURIComponent(reply)}`;
-
-  return (
-    <div>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--line)" }}>
-        <div>
-          <h3 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 500, letterSpacing: "-0.02em" }}>{m.name}</h3>
-          <a href={`mailto:${m.email}`} className="mono" style={{ fontSize: 13, color: "var(--accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {m.email} <Icon name="arrowUpRight" size={12} />
-          </a>
-        </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <span className="tag accent" style={{ maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>{SUBJECT_LABELS[m.subject] || m.subject}</span>
-          <button
-            className="btn btn-icon"
-            title="eliminar"
-            onClick={onDelete}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--danger)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg)")}
-          >
-            <Icon name="trash" size={13} />
-          </button>
-        </div>
-      </div>
-      <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", marginBottom: 16 }}>{fmtDate(m.date)}</div>
-      <p style={{ fontSize: 15, lineHeight: 1.7, color: "var(--fg-2)", margin: 0, whiteSpace: "pre-wrap", textWrap: "pretty" }}>{m.message}</p>
-
-      {!composing ? (
-        <div style={{ marginTop: 28 }}>
-          <button className="btn btn-primary" onClick={() => setComposing(true)}>
-            <Icon name="arrowRight" size={14} /> responder
-          </button>
-        </div>
-      ) : (
-        <div style={{ marginTop: 28, borderTop: "1px solid var(--line)", paddingTop: 20 }}>
-          <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>resposta para {m.email}</div>
-          <textarea
-            className="textarea"
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            rows={6}
-            autoFocus
-            style={{ minHeight: 130, fontFamily: "var(--font-display)", fontSize: 14, lineHeight: 1.55 }}
-            placeholder={`Olá ${m.name.split(" ")[0]},\n\n…`}
-          />
-          <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
-            <a className="btn btn-primary" href={mailtoHref}>
-              <Icon name="external" size={14} /> abrir no meu email
-            </a>
-            <button className="btn btn-ghost" onClick={() => setComposing(false)}>cancelar</button>
-            <span style={{ fontSize: 11, color: "var(--fg-4)", marginLeft: "auto", maxWidth: 280, lineHeight: 1.4 }}>
-              abre o programa de email com a resposta pronta e endereçada
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

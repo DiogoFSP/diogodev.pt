@@ -238,6 +238,25 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
 .contact-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 64px; align-items: start; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
+/* Admin */
+.admin-shell { display: grid; grid-template-columns: 220px 1fr; flex: 1; min-height: 0; }
+.admin-side {
+  background: var(--bg-1);
+  border-right: 1px solid var(--line);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-main { overflow: auto; padding: 32px 36px; background: var(--bg); }
+.admin-edit { display: grid; grid-template-columns: 1fr 320px; gap: 28px; }
+.admin-row {
+  display: grid;
+  grid-template-columns: 32px 2.4fr 1fr 1.4fr 0.9fr 160px;
+  gap: 16px;
+  align-items: center;
+}
+
 /* Tablet / ecrãs médios */
 @media (max-width: 900px) {
   .about-grid { grid-template-columns: 1fr; gap: 32px; }
@@ -263,6 +282,27 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
   .build-grid { grid-template-columns: 1fr; }
   .gallery-grid { grid-template-columns: 1fr; }
   .hide-sm { display: none !important; }
+
+  /* admin: barra lateral passa a linha no topo, tudo numa coluna */
+  .admin-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .admin-side {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  /* o painel da base de dados fica em linha própria (anula o margin-top:auto) */
+  .admin-side > :last-child { margin-top: 0 !important; width: 100%; }
+  .admin-main { padding: 20px 16px; }
+  .admin-edit { grid-template-columns: 1fr; gap: 20px; }
+  /* nas linhas de projeto só ficam cor, título e ações */
+  .admin-row { grid-template-columns: 26px 1fr auto; gap: 10px; }
+  .admin-row > :nth-child(3),
+  .admin-row > :nth-child(4),
+  .admin-row > :nth-child(5) { display: none; }
 }
 
 /* Telemóvel estreito */
