@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useLang } from "../lang";
 import Icon from "./Icon";
 import LangToggle from "./LangToggle";
@@ -36,6 +36,7 @@ function ActiveLine() {
 
 export default function TopNav({ onPalette }: { onPalette?: () => void }) {
   const { t } = useLang();
+  const { pathname } = useLocation();
   // mostra a tecla certa conforme o sistema (⌘ é do Mac)
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -64,6 +65,13 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
           to="/"
           className="mono"
           style={{ color: "var(--fg)", textDecoration: "none", fontSize: 13 }}
+          onClick={(e) => {
+            // já na página inicial: sobe ao topo em vez de "navegar"
+            if (pathname === "/") {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
         >
           <Logo />
         </Link>

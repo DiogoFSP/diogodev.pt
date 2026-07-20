@@ -24,6 +24,7 @@ export default function Footer() {
           <Link to="/contacto" style={linkStyle}>{t("contacto", "contact")}</Link>
           <a href="https://github.com/DiogoFSP" target="_blank" rel="noopener" style={linkStyle}>github</a>
           <a href="https://www.linkedin.com/in/diogofspinto17/" target="_blank" rel="noopener" style={linkStyle}>linkedin</a>
+          <Link to="/admin" style={{ ...linkStyle, color: "var(--fg-4)" }}>admin</Link>
         </div>
       </div>
     </footer>
