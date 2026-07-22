@@ -242,7 +242,7 @@ export async function addMessage(m: { name: string; email: string; subject: stri
 
 // pede o email de confirmação ao visitante; nunca falha para quem chama
 // (a confirmação é um extra — o formulário não pode partir por causa dela)
-export function sendConfirmation(payload: { name: string; email: string; subject: string; message: string }): void {
+export function sendConfirmation(payload: { name: string; email: string; subject: string; message: string; lang?: string }): void {
   if (!supabase) return;
   supabase.functions.invoke("confirmar-mensagem", { body: payload }).catch(() => {});
 }
