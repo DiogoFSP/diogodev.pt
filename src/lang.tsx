@@ -8,14 +8,14 @@ const LangContext = createContext<{
   setLang: (l: Lang) => void;
   t: (pt: string, en: string) => string;
 }>({
-  lang: "pt",
+  lang: "en",
   setLang: () => {},
-  t: (pt) => pt,
+  t: (_pt, en) => en,
 });
 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(
-    () => (localStorage.getItem("diogo-lang") as Lang) ?? "pt"
+    () => (localStorage.getItem("diogo-lang") as Lang) ?? "en"
   );
 
   useEffect(() => {
