@@ -8,6 +8,7 @@ import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import Project from "./pages/Project";
+import ProjectDemo from "./pages/ProjectDemo";
 import { recordPageView } from "./projectsStore";
 
 // repõe o scroll no topo quando a rota muda
@@ -44,6 +45,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/projeto/:slug" element={<Project />} />
+          <Route path="/projeto/:slug/demo" element={<ProjectDemo />} />
           <Route path="/contacto" element={<Contact />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />

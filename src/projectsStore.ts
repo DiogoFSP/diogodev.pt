@@ -39,7 +39,14 @@ export async function fetchProjects(): Promise<Project[]> {
       .select("*")
       .order("position", { ascending: true });
     if (error) throw error;
-    return (data ?? []) as Project[];
+    return ((data ?? []) as Project[]).map((p) => {
+      const staticProj = PROJECTS.find((sp) => sp.id === p.id || sp.slug === p.slug);
+      return {
+        ...p,
+        demo: p.demo || staticProj?.demo || null,
+        github: p.github || staticProj?.github || null,
+      };
+    });
   }
   return loadLocalProjects();
 }

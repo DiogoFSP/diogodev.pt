@@ -314,3 +314,8 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
   .navlink { padding: 8px 7px !important; }
   .nav-actions { gap: 8px !important; }
 }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

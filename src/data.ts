@@ -62,7 +62,7 @@ export const PROJECTS: Project[] = [
     featured: "tall",
     status: "published",
     github: "https://github.com/DiogoFSP/DeepSeaMining",
-    demo: null,
+    demo: "/projeto/deepsea/demo",
     course: "Programação Avançada · ISEC",
     team: ["Diogo Pinto", "Rafael Marques", "Vera Ribeiro"],
     story: [
@@ -191,7 +191,7 @@ export const PROJECTS: Project[] = [
     featured: "wide",
     status: "published",
     github: "https://github.com/DiogoFSP/Diogo.dev",
-    demo: "https://diogofsp.github.io/Diogo.dev/",
+    demo: "/",
     course: { pt: "Projeto pessoal", en: "Personal project" },
     story: [
       {

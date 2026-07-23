@@ -78,9 +78,15 @@ function Header({ project }: { project: ProjectData }) {
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 32, flexWrap: "wrap" }}>
             {project.demo && (
-              <a className="btn btn-primary" href={project.demo} target="_blank" rel="noopener">
-                <Icon name="external" size={14} /> {t("ver demo", "open demo")}
-              </a>
+              project.demo.startsWith("/") ? (
+                <Link className="btn btn-primary" to={project.demo}>
+                  <Icon name="external" size={14} /> {t("ver demo", "open demo")}
+                </Link>
+              ) : (
+                <a className="btn btn-primary" href={project.demo} target="_blank" rel="noopener">
+                  <Icon name="external" size={14} /> {t("ver demo", "open demo")}
+                </a>
+              )
             )}
             {project.github && (
               <a className="btn" href={project.github} target="_blank" rel="noopener">

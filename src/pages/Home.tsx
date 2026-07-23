@@ -94,7 +94,7 @@ function Hero() {
           <Stat label={t("formação", "degree")} value={t("Eng.ª Informática (em curso)", "Computer Engineering (ongoing)")} />
           <Stat label={t("qualificação", "qualification")} value={t("Técnico de Informática — Sistemas", "IT Technician — Systems")} />
           <Stat label={t("interesses", "interests")} value={t("Desenvolvimento de software · IA aplicada", "Software development · Applied AI")} />
-          <Stat label={t("atualmente", "currently")} value="Deep Sea Mining" />
+          <Stat label={t("atualmente", "currently")} value="diogodev.pt" />
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 40, flexWrap: "wrap", alignItems: "center" }}>
