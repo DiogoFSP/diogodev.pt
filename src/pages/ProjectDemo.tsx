@@ -265,7 +265,7 @@ export default function ProjectDemo() {
                     style={{ background: "none", border: "none", color: copiedIndex === 5 ? "#27C93F" : "var(--accent)", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <Icon name={copiedIndex === 5 ? "check" : "copy"} size={13} />
-                    {copiedIndex === 5 ? t("Copiado!", "Copied!", "Copied!") : t("Copiar", "Copy")}
+                    {copiedIndex === 5 ? t("Copiado!", "Copied!") : t("Copiar", "Copy")}
                   </button>
                 </div>
                 <pre className="mono" style={{ margin: 0, padding: 14, background: "#030712", color: "#38BDF8", border: "1px solid var(--line)", borderBottomLeftRadius: "var(--r-md)", borderBottomRightRadius: "var(--r-md)", fontSize: 12, lineHeight: 1.5, overflowX: "auto", whiteSpace: "pre-wrap" }}>
