@@ -2,25 +2,37 @@ import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import SmartLink from "../components/SmartLink";
 import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
 import NotFound from "./NotFound";
 
 type Comando = { label: string; cmd: string };
 
-type Guia = {
-  titulo: [string, string];
-  intro: [string, string];
-  instalar: Comando[];
-  correr: Comando[];
-  fonte: string;
-};
+// projetos que correm no browser mostram-se embebidos; os que só correm
+// no computador do visitante mostram um guia de instalação
+type Demo =
+  | { tipo: "jogo"; titulo: [string, string]; intro: [string, string]; url: string }
+  | { tipo: "guia"; titulo: [string, string]; intro: [string, string]; instalar: Comando[]; correr: Comando[]; fonte: string };
 
 // só os projetos listados aqui têm página /demo; os outros caem no 404
-const GUIAS = new Map<string, Guia>([
+const DEMOS = new Map<string, Demo>([
+  [
+    "4-in-line",
+    {
+      tipo: "jogo",
+      titulo: ["Jogar", "Play"],
+      intro: [
+        "O jogo corre aqui mesmo, no browser. Escolha um modo e comece — não precisa de instalar nada.",
+        "The game runs right here in your browser. Pick a mode and start — nothing to install.",
+      ],
+      url: "https://diogofsp.github.io/LS-4-em-linha-Especial/",
+    },
+  ],
   [
     "deepsea",
     {
+      tipo: "guia",
       titulo: ["Como Jogar", "How to Play"],
       intro: [
         "Instale as dependências necessárias (JDK e Maven) e execute a versão mais recente do jogo no seu computador.",
@@ -52,7 +64,7 @@ export default function ProjectDemo() {
   const { projects, loading } = useProjects();
   const [copiado, setCopiado] = useState<string | null>(null);
 
-  const guia = slug ? GUIAS.get(slug) : undefined;
+  const demo = slug ? DEMOS.get(slug) : undefined;
   const project = projects.find((p) => p.slug === slug || p.id === slug);
 
   const copiar = (cmd: string) => {
@@ -65,7 +77,7 @@ export default function ProjectDemo() {
     );
   };
 
-  if (!guia) return <NotFound />;
+  if (!demo) return <NotFound />;
   if (loading) return <main style={{ minHeight: "60vh" }} />;
   if (!project) return <NotFound />;
 
@@ -91,16 +103,16 @@ export default function ProjectDemo() {
         <div className="container">
           <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ width: 6, height: 6, borderRadius: 999, background: project.accent }} />
-            {t("GUIA DE EXECUÇÃO", "EXECUTION GUIDE")}
+            {demo.tipo === "jogo" ? t("JOGAR NO BROWSER", "PLAY IN THE BROWSER") : t("GUIA DE EXECUÇÃO", "EXECUTION GUIDE")}
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 24 }}>
             <div>
               <h1 style={{ fontSize: "clamp(32px, 4vw, 56px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 400, margin: 0 }}>
-                {project.title} — {t(...guia.titulo)}
+                {project.title} — {t(...demo.titulo)}
               </h1>
               <p style={{ fontSize: 16, color: "var(--fg-2)", lineHeight: 1.5, marginTop: 12, marginBottom: 0, maxWidth: 640 }}>
-                {t(...guia.intro)}
+                {t(...demo.intro)}
               </p>
             </div>
 
@@ -117,37 +129,58 @@ export default function ProjectDemo() {
 
       <div className="container" style={{ marginBottom: 100 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          <Passo
-            numero={1}
-            cor="#3498DB"
-            titulo={t("PASSO 1: Instalar o JDK 21 e o Maven", "STEP 1: Install JDK 21 and Maven")}
-            descricao={t(
-              "Se ainda não tem o Java e o Maven instalados, execute o comando para o seu sistema operativo:",
-              "If you don't have Java and Maven installed, run the command for your OS:"
-            )}
-            minimoColuna={300}
-          >
-            {guia.instalar.map(bloco)}
-          </Passo>
+          {demo.tipo === "jogo" ? (
+            <div>
+              <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--bg-1)", boxShadow: "var(--shadow-1)" }}>
+                <iframe
+                  src={demo.url}
+                  title={`${project.title} — ${t(...demo.titulo)}`}
+                  allow="fullscreen"
+                  style={{ display: "block", width: "100%", aspectRatio: "16 / 10", minHeight: 520, border: 0 }}
+                />
+              </div>
+              <p className="mono" style={{ fontSize: 12, color: "var(--fg-4)", marginTop: 12, marginBottom: 0 }}>
+                {t("Pouco espaço? ", "Feeling cramped? ")}
+                <SmartLink href={demo.url} style={{ color: "var(--accent)", textDecoration: "none" }}>
+                  {t("abrir o jogo em ecrã inteiro", "open the game full screen")}
+                </SmartLink>
+              </p>
+            </div>
+          ) : (
+            <>
+              <Passo
+                numero={1}
+                cor="#3498DB"
+                titulo={t("PASSO 1: Instalar o JDK 21 e o Maven", "STEP 1: Install JDK 21 and Maven")}
+                descricao={t(
+                  "Se ainda não tem o Java e o Maven instalados, execute o comando para o seu sistema operativo:",
+                  "If you don't have Java and Maven installed, run the command for your OS:"
+                )}
+                minimoColuna={300}
+              >
+                {demo.instalar.map(bloco)}
+              </Passo>
 
-          <Passo
-            numero={2}
-            cor="#27C93F"
-            titulo={t("PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game")}
-            descricao={t("Obtenha a versão executável diretamente do GitHub e jogue:", "Fetch the executable directly from GitHub and play:")}
-            minimoColuna={320}
-          >
-            {guia.correr.map(bloco)}
-          </Passo>
+              <Passo
+                numero={2}
+                cor="#27C93F"
+                titulo={t("PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game")}
+                descricao={t("Obtenha a versão executável diretamente do GitHub e jogue:", "Fetch the executable directly from GitHub and play:")}
+                minimoColuna={320}
+              >
+                {demo.correr.map(bloco)}
+              </Passo>
 
-          <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", padding: 24, boxShadow: "var(--shadow-1)" }}>
-            <Bloco
-              label={`💡 ${t("COMPILAR A PARTIR DO CÓDIGO-FONTE", "BUILD FROM SOURCE CODE")}`}
-              cmd={guia.fonte}
-              copiado={copiado === guia.fonte}
-              onCopy={() => copiar(guia.fonte)}
-            />
-          </div>
+              <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", padding: 24, boxShadow: "var(--shadow-1)" }}>
+                <Bloco
+                  label={`💡 ${t("COMPILAR A PARTIR DO CÓDIGO-FONTE", "BUILD FROM SOURCE CODE")}`}
+                  cmd={demo.fonte}
+                  copiado={copiado === demo.fonte}
+                  onCopy={() => copiar(demo.fonte)}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 

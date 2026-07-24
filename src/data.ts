@@ -145,7 +145,7 @@ export const PROJECTS: Project[] = [
     featured: "wide",
     status: "published",
     github: "https://github.com/DiogoFSP/LS-4-em-linha-Especial",
-    demo: null,
+    demo: "/projeto/4-in-line/demo",
     course: "Linguagens e Sistemas · ISEC",
     team: ["Diogo Pinto", "Rafael Marques"],
     story: [
