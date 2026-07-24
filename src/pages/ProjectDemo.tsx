@@ -35,25 +35,25 @@ const DEMOS = new Map<string, Demo>([
       tipo: "guia",
       titulo: ["Como Jogar", "How to Play"],
       intro: [
-        "Instale as dependências necessárias (JDK e Maven) e execute a versão mais recente do jogo no seu computador.",
-        "Install the required dependencies (JDK and Maven) and run the latest version of the game on your computer.",
+        "O jogo é feito em JavaFX e corre no seu computador. Precisa de um JDK 25 que inclua o JavaFX — o da BellSoft (Liberica Full) já vem com ele.",
+        "The game is built with JavaFX and runs on your computer. You need a JDK 25 that bundles JavaFX — BellSoft's Liberica Full includes it.",
       ],
       instalar: [
-        { label: "Windows (PowerShell)", cmd: "winget install Oracle.JDK.21\nwinget install Apache.Maven" },
-        { label: "macOS (Homebrew)", cmd: "brew install openjdk@21\nbrew install maven" },
-        { label: "Linux (Ubuntu / Debian)", cmd: "sudo apt update && sudo apt install -y openjdk-21-jdk openjdk-21-jre maven" },
+        { label: "Windows (PowerShell)", cmd: "winget install BellSoft.LibericaJDK.25.Full" },
+        { label: "macOS / Linux (SDKMAN)", cmd: "curl -s https://get.sdkman.io | bash\nsdk install java 25.0.4.fx-librca" },
+        { label: "Alternativa · Alternative", cmd: "# descarregar o Liberica JDK 25 Full em:\n# https://bell-sw.com/pages/downloads/" },
       ],
       correr: [
         {
           label: "Windows (PowerShell)",
-          cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
+          cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -cp DeepSeaMining-1.0-SNAPSHOT.jar pt.isec.pa.deepsea.DeepSeaApp',
         },
         {
           label: "macOS / Linux",
-          cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
+          cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -cp DeepSeaMining-1.0-SNAPSHOT.jar pt.isec.pa.deepsea.DeepSeaApp',
         },
       ],
-      fonte: "git clone https://github.com/DiogoFSP/DeepSeaMining.git\ncd DeepSeaMining\nmvn clean package\njava -jar target/DeepSeaMining-1.0-SNAPSHOT.jar",
+      fonte: "git clone https://github.com/DiogoFSP/DeepSeaMining.git\ncd DeepSeaMining\nmvn javafx:run",
     },
   ],
 ]);
@@ -151,10 +151,10 @@ export default function ProjectDemo() {
               <Passo
                 numero={1}
                 cor="#3498DB"
-                titulo={t("PASSO 1: Instalar o JDK 21 e o Maven", "STEP 1: Install JDK 21 and Maven")}
+                titulo={t("PASSO 1: Instalar um JDK 25 com JavaFX", "STEP 1: Install a JDK 25 with JavaFX")}
                 descricao={t(
-                  "Se ainda não tem o Java e o Maven instalados, execute o comando para o seu sistema operativo:",
-                  "If you don't have Java and Maven installed, run the command for your OS:"
+                  "Um JDK normal não traz o JavaFX. Escolha o comando do seu sistema operativo:",
+                  "A plain JDK does not bundle JavaFX. Pick the command for your OS:"
                 )}
                 minimoColuna={300}
               >
@@ -165,7 +165,10 @@ export default function ProjectDemo() {
                 numero={2}
                 cor="#27C93F"
                 titulo={t("PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game")}
-                descricao={t("Obtenha a versão executável diretamente do GitHub e jogue:", "Fetch the executable directly from GitHub and play:")}
+                descricao={t(
+                  "Descarregue o jar do GitHub e arranque pela classe principal:",
+                  "Download the jar from GitHub and launch it through the main class:"
+                )}
                 minimoColuna={320}
               >
                 {demo.correr.map(bloco)}
