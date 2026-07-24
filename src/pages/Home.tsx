@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import SmartLink from "../components/SmartLink";
 import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project } from "../data";
 import { useProjects, useSetting } from "../projectsStore";
@@ -269,10 +270,8 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
 
 function QuickLink({ href, icon, label, hover, delay = 0 }: { href: string; icon: string; label: string; hover: boolean; delay?: number }) {
   return (
-    <a
+    <SmartLink
       href={href}
-      target="_blank"
-      rel="noopener"
       onClick={(e) => e.stopPropagation()}
       title={label}
       style={{
@@ -295,7 +294,7 @@ function QuickLink({ href, icon, label, hover, delay = 0 }: { href: string; icon
       onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-2)"; e.currentTarget.style.borderColor = "var(--line)"; }}
     >
       <Icon name={icon} size={14} />
-    </a>
+    </SmartLink>
   );
 }
 

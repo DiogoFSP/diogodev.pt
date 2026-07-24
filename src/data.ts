@@ -191,7 +191,7 @@ export const PROJECTS: Project[] = [
     featured: "wide",
     status: "published",
     github: "https://github.com/DiogoFSP/Diogo.dev",
-    demo: "/",
+    demo: null,
     course: { pt: "Projeto pessoal", en: "Personal project" },
     story: [
       {

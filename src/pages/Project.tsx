@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import SmartLink from "../components/SmartLink";
 import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project as ProjectData } from "../data";
 import { useProjects } from "../projectsStore";
@@ -78,15 +79,9 @@ function Header({ project }: { project: ProjectData }) {
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 32, flexWrap: "wrap" }}>
             {project.demo && (
-              project.demo.startsWith("/") ? (
-                <Link className="btn btn-primary" to={project.demo}>
-                  <Icon name="external" size={14} /> {t("ver demo", "open demo")}
-                </Link>
-              ) : (
-                <a className="btn btn-primary" href={project.demo} target="_blank" rel="noopener">
-                  <Icon name="external" size={14} /> {t("ver demo", "open demo")}
-                </a>
-              )
+              <SmartLink className="btn btn-primary" href={project.demo}>
+                <Icon name="external" size={14} /> {t("ver demo", "open demo")}
+              </SmartLink>
             )}
             {project.github && (
               <a className="btn" href={project.github} target="_blank" rel="noopener">
