@@ -362,7 +362,6 @@ function StatsView() {
     if (dt.getTime() >= since7) last7++;
     if (k === todayKey) today++;
 
-    // se um dia estiver selecionado, filtra apenas esse dia para as páginas mais vistas
     if (!selectedDay || k === selectedDay) {
       byPath.set(v.path, (byPath.get(v.path) || 0) + 1);
     }

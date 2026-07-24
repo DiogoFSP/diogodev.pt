@@ -113,7 +113,6 @@ export default function Contact() {
     // regista a mensagem (BD ou local) sem bloquear o envio por email
     try {
       await addMessage({ name: form.name.trim(), email: form.email.trim(), subject: form.subject.trim(), message: form.message.trim() });
-      // email de confirmação ao remetente, em segundo plano
       sendConfirmation({ name: form.name.trim(), email: form.email.trim(), subject: form.subject.trim(), message: form.message.trim(), lang });
     } catch { /* o email via Web3Forms continua a ser a entrega principal */ }
 
