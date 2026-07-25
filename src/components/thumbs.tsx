@@ -1,9 +1,7 @@
-import type { FC } from "react";
+import type { FC, ReactElement } from "react";
 
-// Miniaturas dos projetos — SVGs desenhados em código.
 
 function Thumb4inline() {
-  // tabuleiro de Connect-Four
   const filled: Record<string, "y" | "r"> = {
     "1-5": "y", "2-5": "r", "3-5": "y", "3-4": "r",
     "4-5": "y", "4-4": "y", "4-3": "r", "5-5": "r",
@@ -39,7 +37,6 @@ function Thumb4inline() {
 }
 
 function ThumbDeepSea() {
-  // vista top-down do fosso: tiles, rochas, polvo, drone e minério
   const tile = 20;
   const rocks = [
     [0, 0], [0, 1], [0, 3], [0, 4], [0, 6], [0, 7],
@@ -122,7 +119,6 @@ function ThumbDeepSea() {
 }
 
 function ThumbPortfolio() {
-  // o site em miniatura
   return (
     <svg viewBox="0 0 180 160" style={{ width: "100%", height: "100%" }}>
       <defs>
@@ -163,18 +159,140 @@ function ThumbPortfolio() {
   );
 }
 
-export const THUMBS: Record<string, FC> = {
+const RUIDO_COPA = [0, -4, 4, 0, -4, 8, 0, 4];
+
+function ThumbBitQuest({ largo }: { largo?: boolean }) {
+  const CEU_ALTO = "#F4F9FD", CEU_BAIXO = "#DCE6EF";
+  const LONGE = "#B3C0CC", MEIO = "#83909B", ARVORES = "#424F5A", ESCURO = "#0E0E0E";
+  const PEDRA = "#615F6C", PEDRA_ESC = "#454448";
+  const OURO = "#F0C051", OURO_CLARO = "#F7E588", LARANJA = "#EE883A";
+  const W = largo ? 320 : 180, H = 160, P = 4, COLS = W / P;
+
+  let n = 0;
+  const b = (x: number, y: number, w: number, h: number, f: string) => (
+    <rect key={n++} x={x} y={y} width={w} height={h} fill={f} />
+  );
+  const q = (v: number) => Math.round(v / P) * P;
+
+  const camada = (base: number, amp: number, freq: number, fase: number, cor: string) => {
+    const out: ReactElement[] = [];
+    for (let i = 0; i < COLS; i++) {
+      const y = q(base - amp * Math.sin((i / COLS) * Math.PI * freq + fase));
+      out.push(b(i * P, y, P, H - y, cor));
+    }
+    return out;
+  };
+
+  const torre = (x: number, topo: number, larg: number, base: number) => [
+    b(x, topo + 12, larg, base - topo - 12, LONGE),
+    b(x + larg / 4, topo, larg / 2, 12, LONGE),
+    b(x + larg / 2 - 2, topo - 8, 4, 8, LONGE),
+  ];
+
+  const pinheiro = (x: number, base: number, h: number) => {
+    const out: ReactElement[] = [];
+    for (let i = 0; i < h / P; i++) {
+      const larg = P * (1 + 2 * Math.floor(i / 3));
+      out.push(b(x - larg / 2, base - h + i * P, larg, P, ARVORES));
+    }
+    out.push(b(x - 2, base, 4, 6, ARVORES));
+    return out;
+  };
+
+  const copa = () => {
+    const out: ReactElement[] = [];
+    for (let i = 0; i < COLS; i++) {
+      const arco = q(4 + 22 * Math.pow((2 * i) / (COLS - 1) - 1, 2));
+      out.push(b(i * P, 0, P, Math.max(4, arco + RUIDO_COPA[Math.floor(i / 2) % RUIDO_COPA.length]), ESCURO));
+    }
+    return out;
+  };
+
+  const GLIFOS: Record<string, string[]> = {
+    B: ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+    Q: ["01110", "10001", "10001", "10001", "10101", "10010", "01101"],
+  };
+  const letra = (car: string, x: number, y: number, s = 4) => {
+    const g = GLIFOS[car];
+    const contorno: ReactElement[] = [];
+    const cheio: ReactElement[] = [];
+    g.forEach((linha, ly) =>
+      [...linha].forEach((c, lx) => {
+        if (c !== "1") return;
+        contorno.push(b(x + lx * s - 1, y + ly * s - 1, s + 2, s + 2, ESCURO));
+        cheio.push(b(x + lx * s, y + ly * s, s, s, ly < 2 ? OURO_CLARO : OURO));
+      })
+    );
+    return [...contorno, ...cheio];
+  };
+
+  const yFar = largo ? 68 : 88, yMid = largo ? 82 : 106, yChao = largo ? 94 : 118;
+  const yBarra = largo ? 102 : 124, yPinhos = largo ? 96 : 120;
+
+  const barra = () => {
+    const y = yBarra, x = largo ? 40 : 16, larg = W - 2 * x, alt = 22;
+    const out: ReactElement[] = [b(x - 2, y - 2, larg + 4, alt + 4, PEDRA_ESC), b(x, y, larg, alt, PEDRA)];
+    for (let i = 0; i < larg / 8; i++) {
+      out.push(b(x + i * 8 + (i % 2) * 4, y + (i % 3) * 7, 1, 7, PEDRA_ESC));
+    }
+    const passo = largo ? 46 : 36;
+    const cx = [0, 1, 2, 3].map((i) => W / 2 + (i - 1.5) * passo);
+    out.push(b(cx[0] - 6, y + 10, 12, 8, "#C8CDD4"), b(cx[0] - 8, y + 6, 16, 4, LARANJA), b(cx[0] - 2, y + 13, 4, 5, PEDRA_ESC));
+    out.push(b(cx[1] - 6, y + 7, 12, 11, "#4A78C8"), b(cx[1] - 4, y + 11, 8, 5, "#E8B24A"), b(cx[1] - 3, y + 4, 6, 3, "#3A5FA0"));
+    out.push(b(cx[2] - 6, y + 8, 12, 10, "#C9A05A"), b(cx[2] - 3, y + 5, 6, 3, "#8A6A3A"), b(cx[2] - 2, y + 11, 4, 4, OURO_CLARO));
+    out.push(b(cx[3] - 3, y + 5, 6, 6, ESCURO), b(cx[3] - 6, y + 12, 12, 6, ESCURO));
+    return out;
+  };
+
+  const escala = largo ? 5 : 4;
+  const largTexto = 12 * escala;
+  const lx = Math.round((W - largTexto) / 2);
+  const ly = largo ? 34 : 40;
+  const pinhos: [number, number][] = largo
+    ? [[16, 36], [46, 28], [78, 32], [110, 26], [140, 34], [172, 28], [204, 36], [236, 28], [268, 32], [300, 36]]
+    : [[14, 36], [38, 28], [60, 32], [86, 24], [110, 36], [136, 28], [164, 32]];
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      style={{ width: "100%", height: "100%" }}
+      preserveAspectRatio="xMidYMid slice"
+      shapeRendering="crispEdges"
+    >
+      <defs>
+        <linearGradient id={`bqceu${largo ? "L" : "N"}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={CEU_ALTO} />
+          <stop offset="1" stopColor={CEU_BAIXO} />
+        </linearGradient>
+      </defs>
+      <rect width={W} height={H} fill={`url(#bqceu${largo ? "L" : "N"})`} />
+      {torre(Math.round(W * 0.16), yFar - 50, 12, yFar + 8)}
+      {torre(Math.round(W * 0.84), yFar - 40, 8, yFar + 8)}
+      {camada(yFar, 12, 2.2, 0.4, LONGE)}
+      {letra("B", lx, ly, escala)}
+      {letra("Q", lx + 7 * escala, ly, escala)}
+      {camada(yMid, 9, 3.1, 1.9, MEIO)}
+      {pinhos.map(([x, h]) => pinheiro(x, yPinhos, h))}
+      {camada(yPinhos, 4, 4.7, 0.8, ARVORES)}
+      <rect x="0" y={yChao} width={W} height={H - yChao} fill={ESCURO} />
+      {copa()}
+      {barra()}
+    </svg>
+  );
+}
+
+export const THUMBS: Record<string, FC<{ largo?: boolean }>> = {
   "4inline": Thumb4inline,
   deepsea: ThumbDeepSea,
   portfolio: ThumbPortfolio,
+  bitquest: ThumbBitQuest,
 };
 
-// miniatura de um projeto: imagem carregada > SVG em código > bloco neutro
-export function ProjectThumb({ id, image, alt }: { id: string; image?: string | null; alt?: string }) {
+export function ProjectThumb({ id, image, alt, largo }: { id: string; image?: string | null; alt?: string; largo?: boolean }) {
   if (image) {
     return <img src={image} alt={alt || ""} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
   }
   const Svg = THUMBS[id];
-  if (Svg) return <Svg />;
+  if (Svg) return <Svg largo={largo} />;
   return <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, var(--bg-2), var(--bg-3))" }} />;
 }

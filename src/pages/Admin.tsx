@@ -1229,7 +1229,7 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
             return (
               <div style={{ background: "var(--bg-1)", border: `1px solid ${form.status === "hidden" ? "var(--warn)" : "var(--line)"}`, borderRadius: "var(--r-lg)", overflow: "hidden", opacity: form.status === "hidden" ? 0.7 : 1, boxShadow: `0 0 0 1px ${form.accent}22, 0 0 24px ${form.accent}18` }}>
                 <div style={{ height: 110, borderBottom: "1px solid var(--line)", position: "relative", background: "var(--bg-2)" }}>
-                  <ProjectThumb id={project?.id || ""} image={form.image} />
+                  <ProjectThumb id={project?.id || ""} image={form.image} largo={form.featured === "wide"} />
                   <span className="mono" style={{ position: "absolute", top: 8, right: 8, fontSize: 9, padding: "2px 6px", borderRadius: 4, background: "var(--glass)", backdropFilter: "blur(6px)", border: "1px solid var(--line)", color: "var(--fg-2)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                     {form.featured === "tall" ? "alto" : form.featured === "wide" ? "largo" : "pequeno"}
                   </span>
