@@ -12,7 +12,7 @@ type Comando = { label: string; cmd: string };
 // projetos que correm no browser mostram-se embebidos; os que só correm
 // no computador do visitante mostram um guia de instalação
 type Demo =
-  | { tipo: "jogo"; titulo: [string, string]; intro: [string, string]; url: string }
+  | { tipo: "embebido"; etiqueta: [string, string]; titulo: [string, string]; intro: [string, string]; url: string }
   | { tipo: "guia"; titulo: [string, string]; intro: [string, string]; instalar: Comando[]; correr: Comando[]; fonte: string };
 
 // só os projetos listados aqui têm página /demo; os outros caem no 404
@@ -20,13 +20,27 @@ const DEMOS = new Map<string, Demo>([
   [
     "4-in-line",
     {
-      tipo: "jogo",
+      tipo: "embebido",
+      etiqueta: ["JOGAR NO BROWSER", "PLAY IN THE BROWSER"],
       titulo: ["Jogar", "Play"],
       intro: [
         "O jogo corre aqui mesmo, no browser. Escolha um modo e comece — não precisa de instalar nada.",
         "The game runs right here in your browser. Pick a mode and start — nothing to install.",
       ],
       url: "https://diogofsp.github.io/LS-4-em-linha-Especial/",
+    },
+  ],
+  [
+    "bitquest",
+    {
+      tipo: "embebido",
+      etiqueta: ["O SITE AO VIVO", "THE SITE, LIVE"],
+      titulo: ["Ver por dentro", "See it running"],
+      intro: [
+        "Este é o site do BitQuest a correr no servidor da escola, aqui dentro.",
+        "This is the BitQuest site running on the school server, right here.",
+      ],
+      url: "https://alpha.soaresbasto.pt/~a25757/PAP/index.php",
     },
   ],
   [
@@ -103,7 +117,7 @@ export default function ProjectDemo() {
         <div className="container">
           <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ width: 6, height: 6, borderRadius: 999, background: project.accent }} />
-            {demo.tipo === "jogo" ? t("JOGAR NO BROWSER", "PLAY IN THE BROWSER") : t("GUIA DE EXECUÇÃO", "EXECUTION GUIDE")}
+            {demo.tipo === "embebido" ? t(...demo.etiqueta) : t("GUIA DE EXECUÇÃO", "EXECUTION GUIDE")}
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 24 }}>
@@ -129,7 +143,7 @@ export default function ProjectDemo() {
 
       <div className="container" style={{ marginBottom: 100 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          {demo.tipo === "jogo" ? (
+          {demo.tipo === "embebido" ? (
             <div>
               <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--bg-1)", boxShadow: "var(--shadow-1)" }}>
                 <iframe
@@ -142,7 +156,7 @@ export default function ProjectDemo() {
               <p className="mono" style={{ fontSize: 12, color: "var(--fg-4)", marginTop: 12, marginBottom: 0 }}>
                 {t("Pouco espaço? ", "Feeling cramped? ")}
                 <SmartLink href={demo.url} style={{ color: "var(--accent)", textDecoration: "none" }}>
-                  {t("abrir o jogo em ecrã inteiro", "open the game full screen")}
+                  {t("abrir em ecrã inteiro", "open in full screen")}
                 </SmartLink>
               </p>
             </div>
