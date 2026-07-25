@@ -46,11 +46,11 @@ const DEMOS = new Map<string, Demo>([
       correr: [
         {
           label: "Windows (PowerShell)",
-          cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -cp DeepSeaMining-1.0-SNAPSHOT.jar pt.isec.pa.deepsea.DeepSeaApp',
+          cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
         },
         {
           label: "macOS / Linux",
-          cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -cp DeepSeaMining-1.0-SNAPSHOT.jar pt.isec.pa.deepsea.DeepSeaApp',
+          cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
         },
       ],
       fonte: "git clone https://github.com/DiogoFSP/DeepSeaMining.git\ncd DeepSeaMining\nmvn javafx:run",
@@ -165,10 +165,7 @@ export default function ProjectDemo() {
                 numero={2}
                 cor="#27C93F"
                 titulo={t("PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game")}
-                descricao={t(
-                  "Descarregue o jar do GitHub e arranque pela classe principal:",
-                  "Download the jar from GitHub and launch it through the main class:"
-                )}
+                descricao={t("Descarregue o jar do GitHub e execute:", "Download the jar from GitHub and run it:")}
                 minimoColuna={320}
               >
                 {demo.correr.map(bloco)}
