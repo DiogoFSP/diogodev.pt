@@ -18,8 +18,8 @@
   /* fg-3 e fg-4 subiram de #6E6E76 e #45454C: nos fundos escuros davam
      3.9:1 e 2.1:1, abaixo do minimo legivel de 4.5:1. Mantem-se a diferenca
      entre os dois niveis (6.6:1 e 4.6:1). */
-  --fg-3: #6E6E76;
-  --fg-4: #45454C;
+  --fg-3: #9A9AA3;
+  --fg-4: #7E7E85;
 
   /* Accent — amber */
   --accent: #FFB454;
@@ -76,8 +76,8 @@
   --fg-2: #514D43;
   /* mesmo problema no tema claro, e pior: #837D6F dava 3.2:1 e #AFA792
      apenas 1.9:1 sobre os fundos de areia. Escurecidos mantendo o tom quente. */
-  --fg-3: #837D6F;
-  --fg-4: #AFA792;
+  --fg-3: #5E5A50;
+  --fg-4: #6C644F;
 
   /* Accent no tema claro = amber escurecido para contraste no fundo areia */
   --accent: #B6701A;
