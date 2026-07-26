@@ -45,6 +45,7 @@ export async function fetchProjects(): Promise<Project[]> {
 }
 
 export async function upsertProject(p: Project): Promise<void> {
+  invalidarProjetos();
   if (supabase) {
     const { error } = await supabase.from("projects").upsert(p);
     if (error) throw error;
@@ -69,6 +70,7 @@ export async function uploadThumb(file: File, slug: string): Promise<string> {
 
 // grava a ordem atual dos projetos (position = índice na lista)
 export async function saveProjectOrder(list: Project[]): Promise<void> {
+  invalidarProjetos();
   const ordered = list.map((p, i) => ({ ...p, position: i }));
   if (supabase) {
     const { error } = await supabase.from("projects").upsert(ordered);
@@ -79,6 +81,7 @@ export async function saveProjectOrder(list: Project[]): Promise<void> {
 }
 
 export async function deleteProject(id: string): Promise<void> {
+  invalidarProjetos();
   if (supabase) {
     const { error } = await supabase.from("projects").delete().eq("id", id);
     if (error) throw error;
@@ -87,20 +90,49 @@ export async function deleteProject(id: string): Promise<void> {
   saveLocalProjects(loadLocalProjects().filter((x) => x.id !== id));
 }
 
+// Carregamento partilhado: há mais do que um componente a chamar useProjects()
+// na mesma página (o Home e a paleta de comandos, por exemplo) e cada um
+// disparava o seu próprio pedido ao Supabase. Passa a haver um só, e quando
+// chega o resultado todos são avisados.
+let cacheProjetos: Project[] | null = null;
+let pedidoEmCurso: Promise<Project[]> | null = null;
+const ouvintes = new Set<(lista: Project[]) => void>();
+
+export function invalidarProjetos() {
+  cacheProjetos = null;
+}
+
+function carregarProjetos(forcar = false): Promise<Project[]> {
+  if (!forcar) {
+    if (cacheProjetos) return Promise.resolve(cacheProjetos);
+    if (pedidoEmCurso) return pedidoEmCurso;
+  }
+  pedidoEmCurso = fetchProjects()
+    // em erro de rede/BD, usa os dados originais
+    .catch(() => PROJECTS)
+    .then((lista) => {
+      cacheProjetos = lista;
+      ouvintes.forEach((avisar) => avisar(lista));
+      return lista;
+    })
+    .finally(() => { pedidoEmCurso = null; });
+  return pedidoEmCurso;
+}
+
 export function useProjects() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<Project[]>(() => cacheProjetos ?? []);
+  const [loading, setLoading] = useState(cacheProjetos === null);
+
+  useEffect(() => {
+    ouvintes.add(setProjects);
+    carregarProjetos().finally(() => setLoading(false));
+    return () => { ouvintes.delete(setProjects); };
+  }, []);
 
   const refresh = useCallback(() => {
     setLoading(true);
-    fetchProjects()
-      .then(setProjects)
-      // em erro de rede/BD, usa os dados originais
-      .catch(() => setProjects(PROJECTS))
-      .finally(() => setLoading(false));
+    carregarProjetos(true).finally(() => setLoading(false));
   }, []);
-
-  useEffect(() => { refresh(); }, [refresh]);
 
   return { projects, loading, refresh };
 }
@@ -166,6 +198,7 @@ export async function fetchSetting(key: string): Promise<string | null> {
 }
 
 export async function setSetting(key: string, value: string | null): Promise<void> {
+  invalidarDefinicao(key);
   if (supabase) {
     if (value === null) {
       const { error } = await supabase.from("settings").delete().eq("key", key);
@@ -182,19 +215,50 @@ export async function setSetting(key: string, value: string | null): Promise<voi
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { /* sem storage */ }
 }
 
+// mesma partilha que nos projetos: o cv_url é pedido pelo TopNav, pelo Home e
+// pela paleta de comandos, e eram três pedidos iguais por cada visita
+const cacheDefinicoes = new Map<string, string | null>();
+const pedidosDefinicoes = new Map<string, Promise<string | null>>();
+const ouvintesDefinicoes = new Map<string, Set<(v: string | null) => void>>();
+
+export function invalidarDefinicao(key: string) {
+  cacheDefinicoes.delete(key);
+}
+
+function carregarDefinicao(key: string, forcar = false): Promise<string | null> {
+  if (!forcar) {
+    if (cacheDefinicoes.has(key)) return Promise.resolve(cacheDefinicoes.get(key) ?? null);
+    const emCurso = pedidosDefinicoes.get(key);
+    if (emCurso) return emCurso;
+  }
+  const p = fetchSetting(key)
+    .catch(() => null)
+    .then((v) => {
+      cacheDefinicoes.set(key, v);
+      ouvintesDefinicoes.get(key)?.forEach((avisar) => avisar(v));
+      return v;
+    })
+    .finally(() => { pedidosDefinicoes.delete(key); });
+  pedidosDefinicoes.set(key, p);
+  return p;
+}
+
 export function useSetting(key: string) {
-  const [value, setValue] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [value, setValue] = useState<string | null>(() => cacheDefinicoes.get(key) ?? null);
+  const [loading, setLoading] = useState(!cacheDefinicoes.has(key));
+
+  useEffect(() => {
+    let conjunto = ouvintesDefinicoes.get(key);
+    if (!conjunto) { conjunto = new Set(); ouvintesDefinicoes.set(key, conjunto); }
+    conjunto.add(setValue);
+    carregarDefinicao(key).finally(() => setLoading(false));
+    return () => { conjunto?.delete(setValue); };
+  }, [key]);
 
   const refresh = useCallback(() => {
     setLoading(true);
-    fetchSetting(key)
-      .then(setValue)
-      .catch(() => setValue(null))
-      .finally(() => setLoading(false));
+    carregarDefinicao(key, true).finally(() => setLoading(false));
   }, [key]);
-
-  useEffect(() => { refresh(); }, [refresh]);
 
   return { value, loading, refresh };
 }

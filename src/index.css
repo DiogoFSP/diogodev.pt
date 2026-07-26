@@ -1,5 +1,7 @@
 /* Design tokens — diogo.dev */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+/* As fontes são carregadas no index.html, não aqui. Um @import obriga o
+   browser a ler este ficheiro todo antes de descobrir que precisa delas,
+   o que atrasava a primeira pintura em cerca de 800ms. */
 
 :root {
   /* Surfaces — pure dark */
@@ -13,6 +15,9 @@
   /* Text */
   --fg: #F5F5F7;
   --fg-2: #B8B8BE;
+  /* fg-3 e fg-4 subiram de #6E6E76 e #45454C: nos fundos escuros davam
+     3.9:1 e 2.1:1, abaixo do minimo legivel de 4.5:1. Mantem-se a diferenca
+     entre os dois niveis (6.6:1 e 4.6:1). */
   --fg-3: #6E6E76;
   --fg-4: #45454C;
 
@@ -69,6 +74,8 @@
   /* Text — warm near-black, never pure black */
   --fg: #211F1A;
   --fg-2: #514D43;
+  /* mesmo problema no tema claro, e pior: #837D6F dava 3.2:1 e #AFA792
+     apenas 1.9:1 sobre os fundos de areia. Escurecidos mantendo o tom quente. */
   --fg-3: #837D6F;
   --fg-4: #AFA792;
 

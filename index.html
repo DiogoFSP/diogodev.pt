@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Fontes: o preconnect abre a ligação ao servidor dos ficheiros .woff2
+         enquanto a folha de estilos ainda vem a caminho, em vez de esperar
+         por ela. O media="print" faz o browser não bloquear a primeira
+         pintura à espera do CSS; o onload devolve-o ao ecrã assim que chega. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" />
+    </noscript>
+
     <!-- Primário -->
     <title>Diogo Pinto — Software Developer | Computer Engineering @ ISEC</title>
     <meta name="description" content="Portfolio of Diogo Pinto, Computer Engineering student at ISEC and IT Technician. Software development in Java, JavaFX and React, with an interest in artificial intelligence. Projects: Deep Sea Mining, 4 in Line." />

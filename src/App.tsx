@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import CmdPalette from "./components/CmdPalette";
 import Spotlight from "./components/Spotlight";
 import TopNav from "./components/TopNav";
-import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import Project from "./pages/Project";
 import ProjectDemo from "./pages/ProjectDemo";
 import { recordPageView } from "./projectsStore";
+
+// o admin é a maior página do site e só interessa a uma pessoa; fica num
+// ficheiro à parte para os visitantes não o descarregarem sem precisar
+const Admin = lazy(() => import("./pages/Admin"));
 
 // repõe o scroll no topo quando a rota muda
 function ScrollToTop() {
@@ -47,7 +50,14 @@ function App() {
           <Route path="/projeto/:slug" element={<Project />} />
           <Route path="/projeto/:slug/demo" element={<ProjectDemo />} />
           <Route path="/contacto" element={<Contact />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={<main style={{ minHeight: "60vh" }} />}>
+                <Admin />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
