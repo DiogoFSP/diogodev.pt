@@ -1,4 +1,5 @@
 import type { FC, ReactElement } from "react";
+import { useLang } from "../lang";
 
 
 // a caixa da miniatura num cartao largo mede cerca de 777x123 (racio 6,3)
@@ -212,6 +213,7 @@ function ThumbDeepSea({ largo }: { largo?: boolean }) {
 }
 
 function ThumbPortfolioLargo() {
+  const { t } = useLang();
   const cores = ["#5EBFFF", "#FFB454", "#C084FC", "#6EE7A8"];
   return (
     <svg viewBox={`0 0 ${FAIXA_W} ${FAIXA_H}`} style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMid slice">
@@ -228,10 +230,7 @@ function ThumbPortfolioLargo() {
 
       {/* a etiqueta do cartao ocupa o canto superior esquerdo, por isso o
           conteudo comeca abaixo dela */}
-      <text x="22" y="42" fontFamily="JetBrains Mono, monospace" fontSize="11" fill="#F5F5F7">Olá, sou o Diogo</text>
-      <rect x="118" y="33" width="4" height="10" fill="#FFB454">
-        <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1s" repeatCount="indefinite" />
-      </rect>
+      <text x="22" y="42" fontFamily="JetBrains Mono, monospace" fontSize="11" fill="#F5F5F7">{t("Olá, sou o Diogo", "Hi, I'm Diogo")}</text>
 
       {cores.map((cor, i) => {
         const x = 158 + i * 40;
@@ -249,6 +248,7 @@ function ThumbPortfolioLargo() {
 }
 
 function ThumbPortfolio({ largo }: { largo?: boolean }) {
+  const { t } = useLang();
   if (largo) return <ThumbPortfolioLargo />;
   return (
     <svg viewBox="0 0 180 160" style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMid slice">
@@ -268,10 +268,7 @@ function ThumbPortfolio({ largo }: { largo?: boolean }) {
       <rect x="62" y="24" width="88" height="12" rx="6" fill="#0F0F11" stroke="#1F1F24" />
       <text x="70" y="33" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#6EE7A8">diogodev.pt</text>
 
-      <text x="32" y="66" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="#F5F5F7">Olá, sou o Diogo</text>
-      <rect x="140" y="57" width="5" height="11" fill="#FFB454">
-        <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1s" repeatCount="indefinite" />
-      </rect>
+      <text x="32" y="66" fontFamily="JetBrains Mono, monospace" fontSize="12" fill="#F5F5F7">{t("Olá, sou o Diogo", "Hi, I'm Diogo")}</text>
       <rect x="32" y="76" width="96" height="4" rx="2" fill="#2A2A31" />
       <rect x="32" y="84" width="72" height="4" rx="2" fill="#2A2A31" />
 
@@ -415,6 +412,7 @@ function ThumbBitQuest({ largo }: { largo?: boolean }) {
 const SO_CORAL = "#FF7A85";
 
 function ThumbSOLargo() {
+  const { t } = useLang();
   // o cartao largo corta as pontas; o conteudo fica entre y=6 e y=48
   const caixa = (x: number, etiqueta: string, aceso?: boolean) => (
     <g key={etiqueta}>
@@ -437,7 +435,7 @@ function ThumbSOLargo() {
       <rect width={FAIXA_W} height={FAIXA_H} fill="url(#gsoL)" />
 
       {/* a etiqueta do cartao ocupa o canto superior esquerdo */}
-      <text x="22" y="42" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#F5F5F7">./controlador</text>
+      <text x="22" y="42" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#F5F5F7">{t("./controlador", "./controller")}</text>
       <rect x="104" y="34" width="4" height="9" fill={SO_CORAL}>
         <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1s" repeatCount="indefinite" />
       </rect>
@@ -449,14 +447,15 @@ function ThumbSOLargo() {
         <animate attributeName="stroke-dashoffset" values="16;0" dur="1.4s" repeatCount="indefinite" />
       </path>
 
-      {caixa(138, "cliente")}
-      {caixa(194, "controlador", true)}
-      {caixa(250, "veiculo")}
+      {caixa(138, t("cliente", "client"))}
+      {caixa(194, t("controlador", "controller"), true)}
+      {caixa(250, t("veiculo", "vehicle"))}
     </svg>
   );
 }
 
 function ThumbSO({ largo }: { largo?: boolean }) {
+  const { t } = useLang();
   if (largo) return <ThumbSOLargo />;
   return (
     <svg viewBox="0 0 180 160" style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMid slice">
@@ -469,10 +468,10 @@ function ThumbSO({ largo }: { largo?: boolean }) {
       <rect width="180" height="160" fill="#0F0F11" />
       <rect width="180" height="160" fill="url(#gsoN)" />
 
+      {/* as etiquetas ficam dentro das caixas para os tubos nao passarem por cima */}
       <rect x="46" y="22" width="88" height="34" rx="5" fill="#141417" stroke={SO_CORAL} />
-      <rect x="54" y="31" width="20" height="3.5" rx="1.75" fill={SO_CORAL} />
-      <rect x="54" y="40" width="52" height="3" rx="1.5" fill="#2A2A31" />
-      <text x="90" y="66" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#8A8A92">controlador</text>
+      <rect x="54" y="30" width="20" height="3.5" rx="1.75" fill={SO_CORAL} />
+      <text x="90" y="48" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7.5" fill="#C8C8CE">{t("controlador", "controller")}</text>
 
       {/* FIFOs do controlador para cada processo */}
       <path d="M 74 56 V 74 H 46 V 96" stroke={SO_CORAL} strokeWidth="1.6" fill="none" strokeDasharray="5 5" opacity="0.75">
@@ -483,14 +482,12 @@ function ThumbSO({ largo }: { largo?: boolean }) {
       </path>
 
       <rect x="16" y="96" width="60" height="34" rx="5" fill="#141417" stroke="#2A2A31" />
-      <rect x="23" y="104" width="16" height="3" rx="1.5" fill="#8A8A92" />
-      <rect x="23" y="112" width="34" height="2.5" rx="1.25" fill="#2A2A31" />
-      <text x="46" y="140" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#8A8A92">cliente</text>
+      <rect x="23" y="104" width="16" height="3" rx="1.5" fill="#6E6E76" />
+      <text x="46" y="122" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7.5" fill="#C8C8CE">{t("cliente", "client")}</text>
 
       <rect x="104" y="96" width="60" height="34" rx="5" fill="#141417" stroke="#2A2A31" />
-      <rect x="111" y="104" width="16" height="3" rx="1.5" fill="#8A8A92" />
-      <rect x="111" y="112" width="34" height="2.5" rx="1.25" fill="#2A2A31" />
-      <text x="134" y="140" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#8A8A92">veiculo</text>
+      <rect x="111" y="104" width="16" height="3" rx="1.5" fill="#6E6E76" />
+      <text x="134" y="122" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7.5" fill="#C8C8CE">{t("veiculo", "vehicle")}</text>
     </svg>
   );
 }
