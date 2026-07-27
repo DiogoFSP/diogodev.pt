@@ -411,11 +411,96 @@ function ThumbBitQuest({ largo }: { largo?: boolean }) {
   );
 }
 
+// tracejado a correr nos tubos: uma animacao por tubo, em vez de uma por ponto
+const SO_CORAL = "#FF7A85";
+
+function ThumbSOLargo() {
+  // o cartao largo corta as pontas; o conteudo fica entre y=6 e y=48
+  const caixa = (x: number, etiqueta: string, aceso?: boolean) => (
+    <g key={etiqueta}>
+      <rect x={x} y="10" width="38" height="26" rx="4" fill="#0F0F11" stroke={aceso ? SO_CORAL : "#2A2A31"} />
+      <rect x={x + 6} y="16" width={aceso ? 16 : 12} height="3" rx="1.5" fill={aceso ? SO_CORAL : "#3A3A40"} />
+      <rect x={x + 6} y="23" width="24" height="2.5" rx="1.25" fill="#2A2A31" />
+      <rect x={x + 6} y="28" width="18" height="2.5" rx="1.25" fill="#2A2A31" />
+      <text x={x + 19} y="46" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="5.5" fill="#8A8A92">{etiqueta}</text>
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${FAIXA_W} ${FAIXA_H}`} style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="gsoL" cx="0.6" cy="0.3" r="1">
+          <stop offset="0" stopColor={SO_CORAL} stopOpacity="0.14" />
+          <stop offset="1" stopColor={SO_CORAL} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width={FAIXA_W} height={FAIXA_H} fill="#0F0F11" />
+      <rect width={FAIXA_W} height={FAIXA_H} fill="url(#gsoL)" />
+
+      {/* a etiqueta do cartao ocupa o canto superior esquerdo */}
+      <text x="22" y="42" fontFamily="JetBrains Mono, monospace" fontSize="10" fill="#F5F5F7">./controlador</text>
+      <rect x="104" y="34" width="4" height="9" fill={SO_CORAL}>
+        <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1s" repeatCount="indefinite" />
+      </rect>
+
+      <path d="M 176 23 H 194" stroke={SO_CORAL} strokeWidth="1.5" fill="none" strokeDasharray="4 4" opacity="0.75">
+        <animate attributeName="stroke-dashoffset" values="16;0" dur="1.4s" repeatCount="indefinite" />
+      </path>
+      <path d="M 232 23 H 250" stroke={SO_CORAL} strokeWidth="1.5" fill="none" strokeDasharray="4 4" opacity="0.75">
+        <animate attributeName="stroke-dashoffset" values="16;0" dur="1.4s" repeatCount="indefinite" />
+      </path>
+
+      {caixa(138, "cliente")}
+      {caixa(194, "controlador", true)}
+      {caixa(250, "veiculo")}
+    </svg>
+  );
+}
+
+function ThumbSO({ largo }: { largo?: boolean }) {
+  if (largo) return <ThumbSOLargo />;
+  return (
+    <svg viewBox="0 0 180 160" style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="gsoN" cx="0.5" cy="0.18" r="0.95">
+          <stop offset="0" stopColor={SO_CORAL} stopOpacity="0.16" />
+          <stop offset="1" stopColor={SO_CORAL} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="180" height="160" fill="#0F0F11" />
+      <rect width="180" height="160" fill="url(#gsoN)" />
+
+      <rect x="46" y="22" width="88" height="34" rx="5" fill="#141417" stroke={SO_CORAL} />
+      <rect x="54" y="31" width="20" height="3.5" rx="1.75" fill={SO_CORAL} />
+      <rect x="54" y="40" width="52" height="3" rx="1.5" fill="#2A2A31" />
+      <text x="90" y="66" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#8A8A92">controlador</text>
+
+      {/* FIFOs do controlador para cada processo */}
+      <path d="M 74 56 V 74 H 46 V 96" stroke={SO_CORAL} strokeWidth="1.6" fill="none" strokeDasharray="5 5" opacity="0.75">
+        <animate attributeName="stroke-dashoffset" values="20;0" dur="1.6s" repeatCount="indefinite" />
+      </path>
+      <path d="M 106 56 V 74 H 134 V 96" stroke={SO_CORAL} strokeWidth="1.6" fill="none" strokeDasharray="5 5" opacity="0.75">
+        <animate attributeName="stroke-dashoffset" values="0;20" dur="1.6s" repeatCount="indefinite" />
+      </path>
+
+      <rect x="16" y="96" width="60" height="34" rx="5" fill="#141417" stroke="#2A2A31" />
+      <rect x="23" y="104" width="16" height="3" rx="1.5" fill="#8A8A92" />
+      <rect x="23" y="112" width="34" height="2.5" rx="1.25" fill="#2A2A31" />
+      <text x="46" y="140" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#8A8A92">cliente</text>
+
+      <rect x="104" y="96" width="60" height="34" rx="5" fill="#141417" stroke="#2A2A31" />
+      <rect x="111" y="104" width="16" height="3" rx="1.5" fill="#8A8A92" />
+      <rect x="111" y="112" width="34" height="2.5" rx="1.25" fill="#2A2A31" />
+      <text x="134" y="140" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontSize="7" fill="#8A8A92">veiculo</text>
+    </svg>
+  );
+}
+
 export const THUMBS: Record<string, FC<{ largo?: boolean }>> = {
   "4inline": Thumb4inline,
   deepsea: ThumbDeepSea,
   portfolio: ThumbPortfolio,
   bitquest: ThumbBitQuest,
+  tpso: ThumbSO,
 };
 
 export function ProjectThumb({ id, image, alt, largo }: { id: string; image?: string | null; alt?: string; largo?: boolean }) {

@@ -10,8 +10,7 @@ import Project from "./pages/Project";
 import ProjectDemo from "./pages/ProjectDemo";
 import { recordPageView } from "./projectsStore";
 
-// o admin é a maior página do site e só interessa a uma pessoa; fica num
-// ficheiro à parte para os visitantes não o descarregarem sem precisar
+// o admin fica num ficheiro à parte; os visitantes não precisam dele
 const Admin = lazy(() => import("./pages/Admin"));
 
 // repõe o scroll no topo quando a rota muda
