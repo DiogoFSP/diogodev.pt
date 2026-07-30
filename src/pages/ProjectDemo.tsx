@@ -8,9 +8,6 @@ import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
 import NotFound from "./NotFound";
 
-// A definição da demo vive na coluna demo_config da tabela projects e
-// edita-se no admin. Sem demo_config, a rota /demo cai no 404.
-
 export default function ProjectDemo() {
   const { slug } = useParams();
   const { t, lang } = useLang();

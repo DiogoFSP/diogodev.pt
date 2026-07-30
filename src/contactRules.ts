@@ -1,7 +1,3 @@
-// Regras de validação do formulário de contacto, separadas do componente
-// para poderem ser testadas. Devolvem códigos, não texto: quem mostra o
-// erro é que decide a língua.
-
 export type CampoContacto = "name" | "email" | "subject" | "message";
 export type ErroContacto = "obrigatorio" | "email-invalido" | "curta";
 

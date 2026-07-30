@@ -61,7 +61,6 @@ export default function Contact() {
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm({ ...form, [k]: v });
   const blur = (k: keyof FormState) => setTouched({ ...touched, [k]: true });
 
-  // as regras vivem em contactRules.ts e devolvem códigos; aqui só se traduz
   const falhas = validarContacto(form);
   const texto: Record<CampoContacto, Partial<Record<ErroContacto, string>>> = {
     name: { obrigatorio: t("Indique o seu nome.", "Please enter your name.") },

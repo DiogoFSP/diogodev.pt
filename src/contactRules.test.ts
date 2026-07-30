@@ -45,7 +45,6 @@ describe("validarContacto", () => {
 
   it("pede mais texto abaixo de 10 caracteres", () => {
     expect(validarContacto({ ...bom, message: "ola" }).message).toBe("curta");
-    // exatamente 10 já passa
     expect(validarContacto({ ...bom, message: "1234567890" }).message).toBeUndefined();
   });
 

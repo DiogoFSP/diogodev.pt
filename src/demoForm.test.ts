@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { DemoConfig } from "./data";
 import { fromDemoForm, toDemoForm, toLoc } from "./demoForm";
 
-// Duas demos reais, uma de cada tipo. Abrir o projeto no admin e gravar
-// sem tocar em nada não pode alterar nenhuma delas.
 const EMBEBIDO: DemoConfig = {
   tipo: "embebido",
   etiqueta: { pt: "JOGAR NO BROWSER", en: "PLAY IN THE BROWSER" },
@@ -57,7 +55,6 @@ describe("toDemoForm", () => {
     const f = toDemoForm(null);
     expect(f.tipo).toBe("nenhuma");
     expect(f.passos).toEqual([]);
-    // e continua sem demo se for gravado assim
     expect(fromDemoForm(f)).toBeNull();
   });
 
@@ -102,7 +99,6 @@ describe("toLoc", () => {
   });
 
   it("guarda uma string única quando o EN é igual ao PT", () => {
-    // evita encher a base de dados de pares redundantes
     expect(toLoc({ pt: "Maven", en: "Maven" })).toBe("Maven");
   });
 

@@ -9,14 +9,12 @@ export type StoryStep = { kind: Localized; title: Localized; body: Localized };
 
 export type BuildPoint = { title: Localized; body: Localized };
 
-// página /projeto/:slug/demo — gerida no admin
 export type DemoBloco = { label: Localized; cmd: Localized };
 export type DemoPasso = {
   cor: string;
   titulo: Localized;
   descricao: Localized;
   blocos: DemoBloco[];
-  // largura mínima de cada bloco antes de a grelha passar a uma coluna
   minimoColuna?: number;
 };
 export type DemoConfig =

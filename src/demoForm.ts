@@ -1,9 +1,5 @@
 import type { DemoConfig, Localized, Project } from "./data";
 
-// Conversão entre o demo_config guardado na BD e a forma que o editor do
-// admin usa: cada texto bilingue vira um par {pt, en} sempre preenchido,
-// para os campos do formulário serem controlados.
-
 export type LocPair = { pt: string; en: string };
 
 export function pickPt(v: Localized | undefined): string {
@@ -28,15 +24,14 @@ export type DemoForm = {
   tipo: "nenhuma" | "embebido" | "guia";
   titulo: LocPair;
   intro: LocPair;
-  etiqueta: LocPair; // só embebido
-  url: string; // só embebido
-  passos: DemoPassoForm[]; // só guia
-  fonte: DemoBlocoForm; // só guia; vazio = sem bloco de código-fonte
+  etiqueta: LocPair;
+  url: string;
+  passos: DemoPassoForm[];
+  fonte: DemoBlocoForm;
 };
 
 export const BLOCO_VAZIO = (): DemoBlocoForm => ({ label: { pt: "", en: "" }, cmd: { pt: "", en: "" } });
 
-// cores dos números dos passos, na ordem em que são criados
 export const CORES_PASSO = ["#3498DB", "#27C93F", "#F39C12", "#9B59B6", "#E74C3C"];
 
 export const PASSO_VAZIO = (i: number): DemoPassoForm => ({

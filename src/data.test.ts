@@ -14,7 +14,6 @@ describe("loc", () => {
   });
 
   it("cai no PT quando falta o EN", () => {
-    // é o caso normal: no admin, deixar o EN vazio significa "usa o PT"
     expect(loc({ pt: "Jogar" } as never, "en")).toBe("Jogar");
   });
 
@@ -23,7 +22,6 @@ describe("loc", () => {
   });
 
   it("respeita um EN vazio sem o trocar pelo PT", () => {
-    // string vazia é uma escolha, não uma ausência
     expect(loc({ pt: "Jogar", en: "" }, "en")).toBe("");
   });
 });

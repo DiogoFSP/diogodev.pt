@@ -24,8 +24,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # nada vai a produção sem passar nos testes e no lint
-      # (o TypeScript já é verificado pelo tsc -b dentro do build)
       - run: npm test
       - run: npm run lint
       - run: npm run build
