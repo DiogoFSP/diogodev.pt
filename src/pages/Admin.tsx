@@ -4,6 +4,7 @@ import Icon from "../components/Icon";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import { type Project } from "../data";
+import { BLOCO_VAZIO, PASSO_VAZIO, fromDemoForm, pickPt, toDemoForm, toLoc, toPair, type DemoForm, type LocPair } from "../demoForm";
 import {
   deleteProject as deleteProjectRemote,
   fetchMessages,
@@ -193,6 +194,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           team: data.team,
           story: data.story,
           build: data.build,
+          demo_config: data.demo_config,
         };
         await upsertProject(np);
         showToast(`Criado “${data.title}” · ${data.status === "hidden" ? "oculto" : "publicado"}`);
@@ -720,11 +722,6 @@ function ListView({ projects, totalCount, hiddenCount, showHidden, setShowHidden
   );
 }
 
-function pickPt(v: Project["role"] | undefined): string {
-  if (v == null) return "";
-  return typeof v === "object" ? (v.pt ?? v.en ?? "") : v;
-}
-
 function ProjectRow({ project, onEdit, onDelete, onToggleVisibility, last, onMove, canReorder, isFirst, isLast }: { project: Project; onEdit: (p: Project) => void; onDelete: (p: Project) => void; onToggleVisibility: (p: Project) => void; last: boolean; onMove: (p: Project, dir: -1 | 1) => void; canReorder: boolean; isFirst: boolean; isLast: boolean }) {
   const [hover, setHover] = useState(false);
   const isHidden = project.status === "hidden";
@@ -808,21 +805,8 @@ type EditFormData = {
   team: string[] | null;
   story: Project["story"];
   build: Project["build"];
+  demo_config: Project["demo_config"];
 };
-
-// par editável {pt, en} a partir de um valor Localized
-type LocPair = { pt: string; en: string };
-
-function toPair(v?: Project["role"]): LocPair {
-  return { pt: pickPt(v), en: v != null && typeof v === "object" ? (v.en ?? "") : "" };
-}
-
-// EN vazio ou igual ao PT grava como string única; senão grava bilingue
-function toLoc(p: LocPair): Project["role"] {
-  const pt = p.pt.trim();
-  const en = p.en.trim();
-  return en && en !== pt ? { pt, en } : pt;
-}
 
 function EditView({ project, onSave, onCancel, isNew }: { project: Project | null; onSave: (d: EditFormData) => void; onCancel: () => void; isNew: boolean }) {
   const [form, setForm] = useState({
@@ -845,9 +829,12 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
     metrics: (project?.metrics || []).map((m) => ({ label: toPair(m.label), value: toPair(m.value) })),
     story: (project?.story || []).map((s) => ({ kind: toPair(s.kind), title: toPair(s.title), body: toPair(s.body) })),
     build: (project?.build || []).map((b) => ({ title: toPair(b.title), body: toPair(b.body) })),
+    demo_config: toDemoForm(project?.demo_config),
   });
 
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm({ ...form, [k]: v });
+
+  const updateDemo = (patch: Partial<DemoForm>) => setForm((f) => ({ ...f, demo_config: { ...f.demo_config, ...patch } }));
 
   // idioma ativo no editor; os campos de texto alternam entre PT e EN
   const [editLang, setEditLang] = useState<"pt" | "en">("pt");
@@ -950,13 +937,19 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
 
     const team = form.team.split(",").map((t) => t.trim()).filter(Boolean);
 
+    // com página de demo configurada, o botão do site aponta para ela;
+    // sem ela, vale o link escrito à mão (ex.: um site já publicado)
+    const demo_config = fromDemoForm(form.demo_config);
+    const demo = demo_config ? `/projeto/${slug}/demo` : form.demo;
+
     onSave({
       title: form.title.trim(),
       slug,
       year: form.year,
       status: form.status,
       github: form.github,
-      demo: form.demo,
+      demo,
+      demo_config,
       featured: form.featured,
       accent: form.accent,
       image: form.image,
@@ -1058,9 +1051,105 @@ function EditView({ project, onSave, onCancel, isNew }: { project: Project | nul
             <AField label="github" icon="github">
               <input className="input mono" value={form.github} onChange={(e) => update("github", e.target.value)} placeholder="https://github.com/DiogoFSP/…" />
             </AField>
-            <AField label="demo / live" icon="external">
-              <input className="input mono" value={form.demo} onChange={(e) => update("demo", e.target.value)} placeholder="https://… (opcional)" />
-            </AField>
+            {form.demo_config.tipo === "nenhuma" ? (
+              <AField label="demo / live" icon="external">
+                <input className="input mono" value={form.demo} onChange={(e) => update("demo", e.target.value)} placeholder="https://… (opcional)" />
+              </AField>
+            ) : (
+              <AField label="demo / live" hint="automático" icon="external">
+                <input className="input mono" value={`/projeto/${slugAtual()}/demo`} disabled style={{ opacity: 0.6 }} />
+              </AField>
+            )}
+          </FormSection>
+
+          <FormSection title="página de demo">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              {([
+                ["nenhuma", "nenhuma", "sem página /demo"],
+                ["embebido", "mostrar algo", "corre dentro do site"],
+                ["guia", "comandos", "guia de execução"],
+              ] as const).map(([v, label, sub]) => {
+                const active = form.demo_config.tipo === v;
+                return (
+                  <button key={v} type="button" onClick={() => updateDemo({ tipo: v })} style={{ background: active ? "var(--bg-2)" : "var(--bg-1)", border: `1px solid ${active ? "var(--accent)" : "var(--line)"}`, borderRadius: "var(--r-md)", padding: "12px 10px", cursor: "pointer", color: active ? "var(--fg)" : "var(--fg-3)", textAlign: "center", transition: "all 140ms var(--ease-out)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
+                    <div className="mono" style={{ fontSize: 10, color: "var(--fg-4)", marginTop: 4 }}>{sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {form.demo_config.tipo !== "nenhuma" && (
+              <>
+                <AField label="título da página">
+                  <input className="input" value={lv(form.demo_config.titulo)} onChange={(e) => updateDemo({ titulo: withLang(form.demo_config.titulo, e.target.value) })} placeholder={ph(form.demo_config.titulo, form.demo_config.tipo === "guia" ? "ex.: Como Executar" : "ex.: Jogar")} />
+                </AField>
+                <AField label="introdução" hint="primeiro parágrafo da página">
+                  <textarea className="textarea" rows={3} value={lv(form.demo_config.intro)} onChange={(e) => updateDemo({ intro: withLang(form.demo_config.intro, e.target.value) })} style={{ fontFamily: "var(--font-display)", fontSize: 13 }} placeholder={ph(form.demo_config.intro, "o que é, e o que o visitante precisa de saber antes de começar")} />
+                </AField>
+              </>
+            )}
+
+            {form.demo_config.tipo === "embebido" && (
+              <>
+                <AField label="url a embeber" hint="tem de permitir iframe">
+                  <input className="input mono" value={form.demo_config.url} onChange={(e) => updateDemo({ url: e.target.value })} placeholder="https://…" />
+                </AField>
+                <AField label="etiqueta" hint="por cima do título, em maiúsculas">
+                  <input className="input mono" value={lv(form.demo_config.etiqueta)} onChange={(e) => updateDemo({ etiqueta: withLang(form.demo_config.etiqueta, e.target.value) })} placeholder={ph(form.demo_config.etiqueta, "JOGAR NO BROWSER")} />
+                </AField>
+              </>
+            )}
+
+            {form.demo_config.tipo === "guia" && (
+              <>
+                {form.demo_config.passos.map((passo, i) => (
+                  <div key={i} style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: 16, position: "relative", background: "var(--bg-1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                      <span className="mono" style={{ fontSize: 11, color: "var(--fg-3)", display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 18, height: 18, borderRadius: "50%", background: `color-mix(in srgb, ${passo.cor} 14%, transparent)`, color: passo.cor, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>{i + 1}</span>
+                        passo {i + 1}
+                      </span>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button type="button" className="btn btn-icon" title="subir" disabled={i === 0} style={{ opacity: i === 0 ? 0.3 : 1 }} onClick={() => updateDemo({ passos: moveRow(form.demo_config.passos, i, -1) })}><Icon name="chevronLeft" size={13} style={{ transform: "rotate(90deg)" }} /></button>
+                        <button type="button" className="btn btn-icon" title="descer" disabled={i === form.demo_config.passos.length - 1} style={{ opacity: i === form.demo_config.passos.length - 1 ? 0.3 : 1 }} onClick={() => updateDemo({ passos: moveRow(form.demo_config.passos, i, 1) })}><Icon name="chevronLeft" size={13} style={{ transform: "rotate(-90deg)" }} /></button>
+                        <button type="button" className="btn btn-icon" title="remover passo" onClick={() => updateDemo({ passos: delRow(form.demo_config.passos, i) })}><Icon name="trash" size={13} /></button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <input className="input" value={lv(passo.titulo)} onChange={(e) => updateDemo({ passos: updRow(form.demo_config.passos, i, { titulo: withLang(passo.titulo, e.target.value) }) })} placeholder={ph(passo.titulo, "título do passo (ex.: PASSO 1: Clonar e compilar)")} />
+                      <textarea className="textarea" rows={2} value={lv(passo.descricao)} onChange={(e) => updateDemo({ passos: updRow(form.demo_config.passos, i, { descricao: withLang(passo.descricao, e.target.value) }) })} style={{ fontFamily: "var(--font-display)", fontSize: 13 }} placeholder={ph(passo.descricao, "o que este passo faz")} />
+
+                      {passo.blocos.map((b, j) => (
+                        <div key={j} style={{ border: "1px solid var(--line)", borderRadius: "var(--r-sm)", padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input className="input mono" style={{ fontSize: 11 }} value={lv(b.label)} onChange={(e) => updateDemo({ passos: updRow(form.demo_config.passos, i, { blocos: updRow(passo.blocos, j, { label: withLang(b.label, e.target.value) }) }) })} placeholder={ph(b.label, "etiqueta (ex.: Ubuntu / Debian)")} />
+                            <button type="button" className="btn btn-icon" title="remover bloco" onClick={() => updateDemo({ passos: updRow(form.demo_config.passos, i, { blocos: delRow(passo.blocos, j) }) })}><Icon name="trash" size={13} /></button>
+                          </div>
+                          <textarea className="textarea mono" rows={3} value={lv(b.cmd)} onChange={(e) => updateDemo({ passos: updRow(form.demo_config.passos, i, { blocos: updRow(passo.blocos, j, { cmd: withLang(b.cmd, e.target.value) }) }) })} style={{ fontSize: 12 }} placeholder={ph(b.cmd, "os comandos, um por linha")} />
+                        </div>
+                      ))}
+
+                      <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11, alignSelf: "flex-start" }} onClick={() => updateDemo({ passos: updRow(form.demo_config.passos, i, { blocos: [...passo.blocos, BLOCO_VAZIO()] }) })}>
+                        <Icon name="plus" size={12} /> bloco de comandos
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11, alignSelf: "flex-start" }} onClick={() => updateDemo({ passos: [...form.demo_config.passos, PASSO_VAZIO(form.demo_config.passos.length)] })}>
+                  <Icon name="plus" size={12} /> passo
+                </button>
+
+                <AField label="bloco de código-fonte" hint="opcional, aparece no fim">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <input className="input mono" style={{ fontSize: 11 }} value={lv(form.demo_config.fonte.label)} onChange={(e) => updateDemo({ fonte: { ...form.demo_config.fonte, label: withLang(form.demo_config.fonte.label, e.target.value) } })} placeholder={ph(form.demo_config.fonte.label, "etiqueta (ex.: COMPILAR A PARTIR DO CÓDIGO-FONTE)")} />
+                    <textarea className="textarea mono" rows={3} value={lv(form.demo_config.fonte.cmd)} onChange={(e) => updateDemo({ fonte: { ...form.demo_config.fonte, cmd: withLang(form.demo_config.fonte.cmd, e.target.value) } })} style={{ fontSize: 12 }} placeholder={ph(form.demo_config.fonte.cmd, "vazio = sem bloco")} />
+                  </div>
+                </AField>
+              </>
+            )}
           </FormSection>
 
           <FormSection title="aparência do cartão">

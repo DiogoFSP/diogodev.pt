@@ -3,178 +3,22 @@ import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import SmartLink from "../components/SmartLink";
+import { loc, type DemoBloco, type Localized } from "../data";
 import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
 import NotFound from "./NotFound";
 
-// label e cmd são um par [pt, en] quando há texto a traduzir
-type Comando = { label: string | [string, string]; cmd: string | [string, string] };
-type PassoGuia = {
-  cor: string;
-  titulo: [string, string];
-  descricao: [string, string];
-  minimoColuna: number;
-  blocos: Comando[];
-};
-
-// projetos que correm no browser mostram-se embebidos; os que só correm
-// no computador do visitante mostram um guia de instalação
-type Demo =
-  | { tipo: "embebido"; etiqueta: [string, string]; titulo: [string, string]; intro: [string, string]; url: string }
-  | { tipo: "guia"; titulo: [string, string]; intro: [string, string]; passos: PassoGuia[]; fonte?: Comando };
-
-// só os projetos listados aqui têm página /demo; os outros caem no 404
-const DEMOS = new Map<string, Demo>([
-  [
-    "4-in-line",
-    {
-      tipo: "embebido",
-      etiqueta: ["JOGAR NO BROWSER", "PLAY IN THE BROWSER"],
-      titulo: ["Jogar", "Play"],
-      intro: [
-        "O jogo corre aqui mesmo, no browser. Escolha um modo e comece — não precisa de instalar nada.",
-        "The game runs right here in your browser. Pick a mode and start — nothing to install.",
-      ],
-      url: "https://diogofsp.github.io/LS-4-em-linha-Especial/",
-    },
-  ],
-  [
-    "bitquest",
-    {
-      tipo: "embebido",
-      etiqueta: ["O SITE AO VIVO", "THE SITE, LIVE"],
-      titulo: ["Ver por dentro", "See it running"],
-      intro: [
-        "Este é o site do BitQuest a correr no servidor da escola, aqui dentro.",
-        "This is the BitQuest site running on the school server, right here.",
-      ],
-      url: "https://alpha.soaresbasto.pt/~a25757/PAP/index.php",
-    },
-  ],
-  [
-    "deepsea",
-    {
-      tipo: "guia",
-      titulo: ["Como Jogar", "How to Play"],
-      intro: [
-        "O jogo é feito em JavaFX e corre no seu computador. Precisa de um JDK 25 que inclua o JavaFX — o da BellSoft (Liberica Full) já vem com ele.",
-        "The game is built with JavaFX and runs on your computer. You need a JDK 25 that bundles JavaFX — BellSoft's Liberica Full includes it.",
-      ],
-      passos: [
-        {
-          cor: "#3498DB",
-          titulo: ["PASSO 1: Instalar um JDK 25 com JavaFX", "STEP 1: Install a JDK 25 with JavaFX"],
-          descricao: [
-            "Um JDK normal não traz o JavaFX. Escolha o comando do seu sistema operativo:",
-            "A plain JDK does not bundle JavaFX. Pick the command for your OS:",
-          ],
-          minimoColuna: 300,
-          blocos: [
-            { label: "Windows (PowerShell)", cmd: "winget install BellSoft.LibericaJDK.25.Full" },
-            { label: "macOS / Linux (SDKMAN)", cmd: "curl -s https://get.sdkman.io | bash\nsdk install java 25.0.4.fx-librca" },
-            { label: "Alternativa · Alternative", cmd: "# descarregar o Liberica JDK 25 Full em:\n# https://bell-sw.com/pages/downloads/" },
-          ],
-        },
-        {
-          cor: "#27C93F",
-          titulo: ["PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game"],
-          descricao: ["Descarregue o jar do GitHub e execute:", "Download the jar from GitHub and run it:"],
-          minimoColuna: 320,
-          blocos: [
-            {
-              label: "Windows (PowerShell)",
-              cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
-            },
-            {
-              label: "macOS / Linux",
-              cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
-            },
-          ],
-        },
-      ],
-      fonte: {
-        label: ["COMPILAR A PARTIR DO CÓDIGO-FONTE", "BUILD FROM SOURCE CODE"],
-        cmd: "git clone https://github.com/DiogoFSP/DeepSeaMining.git\ncd DeepSeaMining\nmvn javafx:run",
-      },
-    },
-  ],
-  [
-    "tpso",
-    {
-      tipo: "guia",
-      titulo: ["Como Executar", "How to Run"],
-      intro: [
-        "Só corre em Linux: são três programas em C que falam entre si por named pipes, sinais e redirecionamento de stdout — mecanismos do UNIX, sem equivalente no Windows. Vai correr o controlador num terminal e um cliente em cada um dos outros.",
-        "Linux only: three C programs talking to each other through named pipes, signals and stdout redirection — UNIX mechanisms with no Windows equivalent. You will run the controller in one terminal and one client in each of the others.",
-      ],
-      passos: [
-        {
-          cor: "#27C93F",
-          titulo: ["PASSO 1: Clonar e compilar", "STEP 1: Clone and build"],
-          descricao: [
-            "Precisa do gcc e do make. O makefile tem o target all, que limpa e compila os três executáveis: controlador, cliente e veiculo.",
-            "You need gcc and make. The makefile has an all target that cleans and builds the three executables: controlador, cliente and veiculo.",
-          ],
-          minimoColuna: 300,
-          blocos: [
-            { label: "Ubuntu / Debian", cmd: "sudo apt update\nsudo apt install -y build-essential git" },
-            {
-              label: "Compilar · Build",
-              cmd: "git clone https://github.com/DiogoFSP/TPSO.git\ncd TPSO\nmake all",
-            },
-          ],
-        },
-        {
-          cor: "#F39C12",
-          titulo: ["PASSO 2: Arrancar a plataforma", "STEP 2: Start the platform"],
-          descricao: [
-            "Dois terminais, ambos na pasta TPSO — é lá que vive o named pipe do controlador, e o cliente recusa arrancar se não o encontrar. A variável NVEICULOS define o tamanho da frota (máximo 10). Cada utilizador novo é um terminal novo com outro username.",
-            "Two terminals, both inside the TPSO folder — that is where the controller's named pipe lives, and the client refuses to start without it. NVEICULOS sets the fleet size (10 max). Each new user is a new terminal with a different username.",
-          ],
-          minimoColuna: 300,
-          blocos: [
-            { label: "Terminal 1 · controlador / controller", cmd: "export NVEICULOS=3\n./controlador" },
-            { label: "Terminal 2 · cliente / client", cmd: "cd TPSO\n./cliente pedro" },
-          ],
-        },
-        {
-          cor: "#9B59B6",
-          titulo: ["PASSO 3: Uma viagem, do início ao fim", "STEP 3: One trip, start to finish"],
-          descricao: [
-            'Escreva um comando de cada vez, no terminal respetivo. A "hora" é tempo simulado: o número de segundos desde o arranque do controlador. As linhas que começam por # são notas, não são comandos.',
-            'Type one command at a time, in its own terminal. "Time" is simulated: seconds since the controller started. Lines starting with # are notes, not commands.',
-          ],
-          minimoColuna: 340,
-          blocos: [
-            {
-              label: "No cliente · in the client",
-              cmd: [
-                "# um serviço às 10s, de Coimbra, 5 km\nagendar 10 Coimbra 5\n\n# os serviços que agendei\nconsultar\n\n# quando o veículo avisar que chegou\nentrar Lisboa\n\n# opcional: sair a meio da viagem\nsair\n\n# fechar o cliente\nterminar",
-                "# a trip at 10s, from Coimbra, 5 km\nagendar 10 Coimbra 5\n\n# the trips I booked\nconsultar\n\n# once the vehicle says it arrived\nentrar Lisboa\n\n# optional: leave mid-trip\nsair\n\n# close the client\nterminar",
-              ],
-            },
-            {
-              label: "No controlador · in the controller",
-              cmd: [
-                "listar     # serviços agendados\nutiliz     # quem está ligado\nfrota      # veículos e % do percurso\nkm         # quilómetros da frota\nhora       # tempo simulado\nterminar   # desligar tudo",
-                "listar     # booked trips\nutiliz     # who is connected\nfrota      # vehicles and % done\nkm         # fleet kilometres\nhora       # simulated time\nterminar   # shut everything down",
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ],
-]);
+// A definição da demo vive na coluna demo_config da tabela projects e
+// edita-se no admin. Sem demo_config, a rota /demo cai no 404.
 
 export default function ProjectDemo() {
   const { slug } = useParams();
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { projects, loading } = useProjects();
   const [copiado, setCopiado] = useState<string | null>(null);
 
-  const demo = slug ? DEMOS.get(slug) : undefined;
   const project = projects.find((p) => p.slug === slug || p.id === slug);
+  const demo = project?.demo_config ?? null;
 
   const copiar = (cmd: string) => {
     navigator.clipboard.writeText(cmd).then(
@@ -186,13 +30,14 @@ export default function ProjectDemo() {
     );
   };
 
-  if (!demo) return <NotFound />;
   if (loading) return <main style={{ minHeight: "60vh" }} />;
-  if (!project) return <NotFound />;
+  if (!project || !demo) return <NotFound />;
 
-  const bloco = (c: Comando, prefixo = "") => {
-    const cmd = typeof c.cmd === "string" ? c.cmd : t(...c.cmd);
-    const label = prefixo + (typeof c.label === "string" ? c.label : t(...c.label));
+  const texto = (v: Localized) => loc(v, lang);
+
+  const bloco = (c: DemoBloco, prefixo = "") => {
+    const cmd = texto(c.cmd);
+    const label = prefixo + texto(c.label);
     return <Bloco key={label} label={label} cmd={cmd} copiado={copiado === cmd} onCopy={() => copiar(cmd)} />;
   };
 
@@ -214,16 +59,16 @@ export default function ProjectDemo() {
         <div className="container">
           <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ width: 6, height: 6, borderRadius: 999, background: project.accent }} />
-            {demo.tipo === "embebido" ? t(...demo.etiqueta) : t("GUIA DE EXECUÇÃO", "EXECUTION GUIDE")}
+            {demo.tipo === "embebido" ? texto(demo.etiqueta) : t("GUIA DE EXECUÇÃO", "EXECUTION GUIDE")}
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 24 }}>
             <div>
               <h1 style={{ fontSize: "clamp(32px, 4vw, 56px)", lineHeight: 1.05, letterSpacing: "-0.03em", fontWeight: 400, margin: 0 }}>
-                {project.title} — {t(...demo.titulo)}
+                {project.title} — {texto(demo.titulo)}
               </h1>
               <p style={{ fontSize: 16, color: "var(--fg-2)", lineHeight: 1.5, marginTop: 12, marginBottom: 0, maxWidth: 640 }}>
-                {t(...demo.intro)}
+                {texto(demo.intro)}
               </p>
             </div>
 
@@ -245,7 +90,7 @@ export default function ProjectDemo() {
               <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--bg-1)", boxShadow: "var(--shadow-1)" }}>
                 <iframe
                   src={demo.url}
-                  title={`${project.title} — ${t(...demo.titulo)}`}
+                  title={`${project.title} — ${texto(demo.titulo)}`}
                   allow="fullscreen"
                   style={{ display: "block", width: "100%", aspectRatio: "16 / 10", minHeight: 520, border: 0 }}
                 />
@@ -261,12 +106,12 @@ export default function ProjectDemo() {
             <>
               {demo.passos.map((passo, i) => (
                 <Passo
-                  key={passo.titulo[0]}
+                  key={`${i}-${texto(passo.titulo)}`}
                   numero={i + 1}
                   cor={passo.cor}
-                  titulo={t(...passo.titulo)}
-                  descricao={t(...passo.descricao)}
-                  minimoColuna={passo.minimoColuna}
+                  titulo={texto(passo.titulo)}
+                  descricao={texto(passo.descricao)}
+                  minimoColuna={passo.minimoColuna ?? 300}
                 >
                   {passo.blocos.map((b) => bloco(b))}
                 </Passo>

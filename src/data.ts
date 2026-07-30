@@ -9,6 +9,20 @@ export type StoryStep = { kind: Localized; title: Localized; body: Localized };
 
 export type BuildPoint = { title: Localized; body: Localized };
 
+// página /projeto/:slug/demo — gerida no admin
+export type DemoBloco = { label: Localized; cmd: Localized };
+export type DemoPasso = {
+  cor: string;
+  titulo: Localized;
+  descricao: Localized;
+  blocos: DemoBloco[];
+  // largura mínima de cada bloco antes de a grelha passar a uma coluna
+  minimoColuna?: number;
+};
+export type DemoConfig =
+  | { tipo: "embebido"; etiqueta: Localized; titulo: Localized; intro: Localized; url: string }
+  | { tipo: "guia"; titulo: Localized; intro: Localized; passos: DemoPasso[]; fonte?: DemoBloco | null };
+
 export type Project = {
   id: string;
   title: string;
@@ -31,6 +45,7 @@ export type Project = {
   team?: string[] | null;
   story?: StoryStep[] | null;
   build?: BuildPoint[] | null;
+  demo_config?: DemoConfig | null;
 };
 
 export function loc(v: Localized, lang: Lang): string {
