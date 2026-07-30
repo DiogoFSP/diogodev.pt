@@ -17,11 +17,11 @@ export function substituir(html, padrao, novo) {
   return html.replace(padrao, novo);
 }
 
-export function paginaDoProjeto(base, p) {
+export function paginaDoProjeto(base, p, temImagem = false) {
   const titulo = `${p.title} — Diogo Pinto`;
   const descricao = cortar(loc(p.summary) || loc(p.tagline) || "");
   const url = `${SITE}/projeto/${p.slug}`;
-  const imagem = Array.isArray(p.gallery) && p.gallery[0] ? p.gallery[0] : IMAGEM_OMISSAO;
+  const imagem = temImagem ? `${SITE}/og/${p.slug}.png` : IMAGEM_OMISSAO;
   const alt = `${p.title} — ${loc(p.tagline) || "projeto"}`;
 
   let html = base;
@@ -38,8 +38,5 @@ export function paginaDoProjeto(base, p) {
   html = substituir(html, /(<meta name="twitter:description" content=")[^"]*(")/, `$1${escapar(descricao)}$2`);
   html = substituir(html, /(<meta name="twitter:image" content=")[^"]*(")/, `$1${escapar(imagem)}$2`);
 
-  if (imagem !== IMAGEM_OMISSAO) {
-    html = html.replace(/\s*<meta property="og:image:(width|height)" content="\d+" \/>/g, "");
-  }
   return html;
 }
