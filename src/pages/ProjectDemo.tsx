@@ -7,13 +7,21 @@ import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
 import NotFound from "./NotFound";
 
-type Comando = { label: string; cmd: string };
+// label e cmd são um par [pt, en] quando há texto a traduzir
+type Comando = { label: string | [string, string]; cmd: string | [string, string] };
+type PassoGuia = {
+  cor: string;
+  titulo: [string, string];
+  descricao: [string, string];
+  minimoColuna: number;
+  blocos: Comando[];
+};
 
 // projetos que correm no browser mostram-se embebidos; os que só correm
 // no computador do visitante mostram um guia de instalação
 type Demo =
   | { tipo: "embebido"; etiqueta: [string, string]; titulo: [string, string]; intro: [string, string]; url: string }
-  | { tipo: "guia"; titulo: [string, string]; intro: [string, string]; instalar: Comando[]; correr: Comando[]; fonte: string };
+  | { tipo: "guia"; titulo: [string, string]; intro: [string, string]; passos: PassoGuia[]; fonte?: Comando };
 
 // só os projetos listados aqui têm página /demo; os outros caem no 404
 const DEMOS = new Map<string, Demo>([
@@ -52,22 +60,109 @@ const DEMOS = new Map<string, Demo>([
         "O jogo é feito em JavaFX e corre no seu computador. Precisa de um JDK 25 que inclua o JavaFX — o da BellSoft (Liberica Full) já vem com ele.",
         "The game is built with JavaFX and runs on your computer. You need a JDK 25 that bundles JavaFX — BellSoft's Liberica Full includes it.",
       ],
-      instalar: [
-        { label: "Windows (PowerShell)", cmd: "winget install BellSoft.LibericaJDK.25.Full" },
-        { label: "macOS / Linux (SDKMAN)", cmd: "curl -s https://get.sdkman.io | bash\nsdk install java 25.0.4.fx-librca" },
-        { label: "Alternativa · Alternative", cmd: "# descarregar o Liberica JDK 25 Full em:\n# https://bell-sw.com/pages/downloads/" },
-      ],
-      correr: [
+      passos: [
         {
-          label: "Windows (PowerShell)",
-          cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
+          cor: "#3498DB",
+          titulo: ["PASSO 1: Instalar um JDK 25 com JavaFX", "STEP 1: Install a JDK 25 with JavaFX"],
+          descricao: [
+            "Um JDK normal não traz o JavaFX. Escolha o comando do seu sistema operativo:",
+            "A plain JDK does not bundle JavaFX. Pick the command for your OS:",
+          ],
+          minimoColuna: 300,
+          blocos: [
+            { label: "Windows (PowerShell)", cmd: "winget install BellSoft.LibericaJDK.25.Full" },
+            { label: "macOS / Linux (SDKMAN)", cmd: "curl -s https://get.sdkman.io | bash\nsdk install java 25.0.4.fx-librca" },
+            { label: "Alternativa · Alternative", cmd: "# descarregar o Liberica JDK 25 Full em:\n# https://bell-sw.com/pages/downloads/" },
+          ],
         },
         {
-          label: "macOS / Linux",
-          cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
+          cor: "#27C93F",
+          titulo: ["PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game"],
+          descricao: ["Descarregue o jar do GitHub e execute:", "Download the jar from GitHub and run it:"],
+          minimoColuna: 320,
+          blocos: [
+            {
+              label: "Windows (PowerShell)",
+              cmd: 'Invoke-WebRequest -Uri "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar" -OutFile "DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
+            },
+            {
+              label: "macOS / Linux",
+              cmd: 'curl -L -O "https://github.com/DiogoFSP/DeepSeaMining/releases/latest/download/DeepSeaMining-1.0-SNAPSHOT.jar"\njava -jar DeepSeaMining-1.0-SNAPSHOT.jar',
+            },
+          ],
         },
       ],
-      fonte: "git clone https://github.com/DiogoFSP/DeepSeaMining.git\ncd DeepSeaMining\nmvn javafx:run",
+      fonte: {
+        label: ["COMPILAR A PARTIR DO CÓDIGO-FONTE", "BUILD FROM SOURCE CODE"],
+        cmd: "git clone https://github.com/DiogoFSP/DeepSeaMining.git\ncd DeepSeaMining\nmvn javafx:run",
+      },
+    },
+  ],
+  [
+    "tpso",
+    {
+      tipo: "guia",
+      titulo: ["Como Executar", "How to Run"],
+      intro: [
+        "Só corre em Linux: são três programas em C que falam entre si por named pipes, sinais e redirecionamento de stdout — mecanismos do UNIX, sem equivalente no Windows. Vai correr o controlador num terminal e um cliente em cada um dos outros.",
+        "Linux only: three C programs talking to each other through named pipes, signals and stdout redirection — UNIX mechanisms with no Windows equivalent. You will run the controller in one terminal and one client in each of the others.",
+      ],
+      passos: [
+        {
+          cor: "#27C93F",
+          titulo: ["PASSO 1: Clonar e compilar", "STEP 1: Clone and build"],
+          descricao: [
+            "Precisa do gcc e do make. O makefile tem o target all, que limpa e compila os três executáveis: controlador, cliente e veiculo.",
+            "You need gcc and make. The makefile has an all target that cleans and builds the three executables: controlador, cliente and veiculo.",
+          ],
+          minimoColuna: 300,
+          blocos: [
+            { label: "Ubuntu / Debian", cmd: "sudo apt update\nsudo apt install -y build-essential git" },
+            {
+              label: "Compilar · Build",
+              cmd: "git clone https://github.com/DiogoFSP/TPSO.git\ncd TPSO\nmake all",
+            },
+          ],
+        },
+        {
+          cor: "#F39C12",
+          titulo: ["PASSO 2: Arrancar a plataforma", "STEP 2: Start the platform"],
+          descricao: [
+            "Dois terminais, ambos na pasta TPSO — é lá que vive o named pipe do controlador, e o cliente recusa arrancar se não o encontrar. A variável NVEICULOS define o tamanho da frota (máximo 10). Cada utilizador novo é um terminal novo com outro username.",
+            "Two terminals, both inside the TPSO folder — that is where the controller's named pipe lives, and the client refuses to start without it. NVEICULOS sets the fleet size (10 max). Each new user is a new terminal with a different username.",
+          ],
+          minimoColuna: 300,
+          blocos: [
+            { label: "Terminal 1 · controlador / controller", cmd: "export NVEICULOS=3\n./controlador" },
+            { label: "Terminal 2 · cliente / client", cmd: "cd TPSO\n./cliente pedro" },
+          ],
+        },
+        {
+          cor: "#9B59B6",
+          titulo: ["PASSO 3: Uma viagem, do início ao fim", "STEP 3: One trip, start to finish"],
+          descricao: [
+            'Escreva um comando de cada vez, no terminal respetivo. A "hora" é tempo simulado: o número de segundos desde o arranque do controlador. As linhas que começam por # são notas, não são comandos.',
+            'Type one command at a time, in its own terminal. "Time" is simulated: seconds since the controller started. Lines starting with # are notes, not commands.',
+          ],
+          minimoColuna: 340,
+          blocos: [
+            {
+              label: "No cliente · in the client",
+              cmd: [
+                "# um serviço às 10s, de Coimbra, 5 km\nagendar 10 Coimbra 5\n\n# os serviços que agendei\nconsultar\n\n# quando o veículo avisar que chegou\nentrar Lisboa\n\n# opcional: sair a meio da viagem\nsair\n\n# fechar o cliente\nterminar",
+                "# a trip at 10s, from Coimbra, 5 km\nagendar 10 Coimbra 5\n\n# the trips I booked\nconsultar\n\n# once the vehicle says it arrived\nentrar Lisboa\n\n# optional: leave mid-trip\nsair\n\n# close the client\nterminar",
+              ],
+            },
+            {
+              label: "No controlador · in the controller",
+              cmd: [
+                "listar     # serviços agendados\nutiliz     # quem está ligado\nfrota      # veículos e % do percurso\nkm         # quilómetros da frota\nhora       # tempo simulado\nterminar   # desligar tudo",
+                "listar     # booked trips\nutiliz     # who is connected\nfrota      # vehicles and % done\nkm         # fleet kilometres\nhora       # simulated time\nterminar   # shut everything down",
+              ],
+            },
+          ],
+        },
+      ],
     },
   ],
 ]);
@@ -95,9 +190,11 @@ export default function ProjectDemo() {
   if (loading) return <main style={{ minHeight: "60vh" }} />;
   if (!project) return <NotFound />;
 
-  const bloco = (c: Comando) => (
-    <Bloco key={c.label} label={c.label} cmd={c.cmd} copiado={copiado === c.cmd} onCopy={() => copiar(c.cmd)} />
-  );
+  const bloco = (c: Comando, prefixo = "") => {
+    const cmd = typeof c.cmd === "string" ? c.cmd : t(...c.cmd);
+    const label = prefixo + (typeof c.label === "string" ? c.label : t(...c.label));
+    return <Bloco key={label} label={label} cmd={cmd} copiado={copiado === cmd} onCopy={() => copiar(cmd)} />;
+  };
 
   return (
     <main style={{ animation: "fadeIn 380ms var(--ease-out)" }}>
@@ -162,37 +259,24 @@ export default function ProjectDemo() {
             </div>
           ) : (
             <>
-              <Passo
-                numero={1}
-                cor="#3498DB"
-                titulo={t("PASSO 1: Instalar um JDK 25 com JavaFX", "STEP 1: Install a JDK 25 with JavaFX")}
-                descricao={t(
-                  "Um JDK normal não traz o JavaFX. Escolha o comando do seu sistema operativo:",
-                  "A plain JDK does not bundle JavaFX. Pick the command for your OS:"
-                )}
-                minimoColuna={300}
-              >
-                {demo.instalar.map(bloco)}
-              </Passo>
+              {demo.passos.map((passo, i) => (
+                <Passo
+                  key={passo.titulo[0]}
+                  numero={i + 1}
+                  cor={passo.cor}
+                  titulo={t(...passo.titulo)}
+                  descricao={t(...passo.descricao)}
+                  minimoColuna={passo.minimoColuna}
+                >
+                  {passo.blocos.map((b) => bloco(b))}
+                </Passo>
+              ))}
 
-              <Passo
-                numero={2}
-                cor="#27C93F"
-                titulo={t("PASSO 2: Descarregar a Release e Executar o Jogo", "STEP 2: Download Release & Run Game")}
-                descricao={t("Descarregue o jar do GitHub e execute:", "Download the jar from GitHub and run it:")}
-                minimoColuna={320}
-              >
-                {demo.correr.map(bloco)}
-              </Passo>
-
-              <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", padding: 24, boxShadow: "var(--shadow-1)" }}>
-                <Bloco
-                  label={`💡 ${t("COMPILAR A PARTIR DO CÓDIGO-FONTE", "BUILD FROM SOURCE CODE")}`}
-                  cmd={demo.fonte}
-                  copiado={copiado === demo.fonte}
-                  onCopy={() => copiar(demo.fonte)}
-                />
-              </div>
+              {demo.fonte && (
+                <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", padding: 24, boxShadow: "var(--shadow-1)" }}>
+                  {bloco(demo.fonte, "💡 ")}
+                </div>
+              )}
             </>
           )}
         </div>
