@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import { addMessage, sendConfirmation } from "../projectsStore";
+import { MENSAGEM_MINIMA, validarContacto, type CampoContacto, type ErroContacto } from "../contactRules";
 import { useLang } from "../lang";
 
 // Web3Forms — entrega das mensagens por email (a access key é pública)
@@ -60,23 +61,31 @@ export default function Contact() {
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm({ ...form, [k]: v });
   const blur = (k: keyof FormState) => setTouched({ ...touched, [k]: true });
 
-  const errors = {
-    name: !form.name.trim() ? t("Indique o seu nome.", "Please enter your name.") : null,
-    email: !form.email.trim()
-      ? t("Indique um email para resposta.", "Please enter an email so I can reply.")
-      : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
-        ? t("Esse email não parece válido.", "That email doesn't look valid.")
-        : null,
-    message: !form.message.trim()
-      ? t("Escreva uma breve mensagem.", "Please write a short message.")
-      : form.message.trim().length < 10
-        ? t("Um pouco mais? (mínimo 10 caracteres)", "A bit more, please (10 characters minimum).")
-        : null,
-    subject: !form.subject.trim()
-      ? t("Indique o assunto da mensagem.", "Please enter a subject.")
-      : null,
+  // as regras vivem em contactRules.ts e devolvem códigos; aqui só se traduz
+  const falhas = validarContacto(form);
+  const texto: Record<CampoContacto, Partial<Record<ErroContacto, string>>> = {
+    name: { obrigatorio: t("Indique o seu nome.", "Please enter your name.") },
+    email: {
+      obrigatorio: t("Indique um email para resposta.", "Please enter an email so I can reply."),
+      "email-invalido": t("Esse email não parece válido.", "That email doesn't look valid."),
+    },
+    message: {
+      obrigatorio: t("Escreva uma breve mensagem.", "Please write a short message."),
+      curta: t(`Um pouco mais? (mínimo ${MENSAGEM_MINIMA} caracteres)`, `A bit more, please (${MENSAGEM_MINIMA} characters minimum).`),
+    },
+    subject: { obrigatorio: t("Indique o assunto da mensagem.", "Please enter a subject.") },
   };
-  const isValid = !errors.name && !errors.email && !errors.message && !errors.subject;
+  const erroDe = (campo: CampoContacto) => {
+    const codigo = falhas[campo];
+    return codigo ? texto[campo][codigo] ?? null : null;
+  };
+  const errors = {
+    name: erroDe("name"),
+    email: erroDe("email"),
+    message: erroDe("message"),
+    subject: erroDe("subject"),
+  };
+  const isValid = Object.keys(falhas).length === 0;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
