@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { THUMBS } from "../src/components/thumbs";
-import { OG_H, OG_W, svgDoProjeto } from "./render-thumb";
+import { OG_H, OG_W, moldarRaster, moldarSvg, svgDoProjeto } from "./render-thumb";
 
 const ids = Object.keys(THUMBS);
 
@@ -33,5 +33,31 @@ describe("svgDoProjeto", () => {
 
   it("devolve null para um projeto sem miniatura", () => {
     expect(svgDoProjeto("nao-existe")).toBeNull();
+  });
+});
+
+describe("moldarSvg", () => {
+  it("aceita um svg carregado no admin", () => {
+    const enviado = '<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#123456"/></svg>';
+    const molde = moldarSvg(enviado)!;
+    expect(molde).toContain(`<rect width="${OG_W}" height="${OG_H}" fill="#123456"/>`);
+    expect(molde).toContain('preserveAspectRatio="xMidYMid meet"');
+  });
+
+  it("escurece o fundo quando o svg não tem cor de fundo", () => {
+    expect(moldarSvg('<svg viewBox="0 0 10 10"><circle r="1"/></svg>')).toContain('fill="#0A0A0B"');
+  });
+
+  it("desiste de um svg sem viewBox, em vez de gerar lixo", () => {
+    expect(moldarSvg('<svg width="10" height="10"></svg>')).toBeNull();
+  });
+});
+
+describe("moldarRaster", () => {
+  it("enche o cartão com a imagem, sem bordas", () => {
+    const molde = moldarRaster("data:image/png;base64,AAAA");
+    expect(molde).toContain('href="data:image/png;base64,AAAA"');
+    expect(molde).toContain('preserveAspectRatio="xMidYMid slice"');
+    expect(molde).toContain(`width="${OG_W}" height="${OG_H}"`);
   });
 });

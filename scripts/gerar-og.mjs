@@ -29,7 +29,7 @@ if (!url || !chave) {
 }
 
 const resposta = await fetch(
-  `${url}/rest/v1/projects?select=id,slug,title,summary,tagline,status&status=eq.published`,
+  `${url}/rest/v1/projects?select=id,slug,title,summary,tagline,image,gallery,status&status=eq.published`,
   { headers: { apikey: chave, Authorization: `Bearer ${chave}` } }
 );
 if (!resposta.ok) {
