@@ -21,6 +21,7 @@ import {
   type Message,
 } from "../projectsStore";
 import { ProjectThumb } from "../components/thumbs";
+import { sanitizeExternalUrl } from "../security/url";
 import { supabase, supabaseConfigured } from "../supabase";
 
 // Admin: projetos via projectsStore; auth Supabase quando configurado,
@@ -592,7 +593,7 @@ function PercursoView() {
       </div>
 
       <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-        <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={() => alterar([...lista, { ano: "", titulo: { pt: "", en: "" }, detalhe: { pt: "", en: "" } }])}>
+        <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={() => alterar([...lista, { ano: { pt: "", en: "" }, titulo: { pt: "", en: "" }, detalhe: { pt: "", en: "" } }])}>
           <Icon name="plus" size={12} /> marco
         </button>
         <button type="button" className="btn btn-primary" disabled={busy} onClick={guardar}>
@@ -609,6 +610,7 @@ function PercursoView() {
 
 function CvView() {
   const { value: cvUrl, loading, refresh } = useSetting("cv_url");
+  const cvSeguro = cvUrl ? sanitizeExternalUrl(cvUrl) : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -654,17 +656,17 @@ function CvView() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ width: 8, height: 8, borderRadius: 999, background: loading ? "var(--fg-4)" : cvUrl ? "var(--success)" : "var(--warn)", boxShadow: cvUrl ? "0 0 8px var(--success)" : "none" }} />
           <span style={{ fontSize: 14 }}>
-            {loading ? "a verificar…" : cvUrl ? "CV carregado — o botão de descarregar está visível no site." : "Sem CV — o botão de descarregar não aparece no site."}
+            {loading ? "a verificar…" : cvSeguro ? "CV carregado — o botão de descarregar está visível no site." : cvUrl ? "CV inválido — voltar a carregar o ficheiro." : "Sem CV — o botão de descarregar não aparece no site."}
           </span>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <label className="btn" style={{ cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>
-            <Icon name="upload" size={14} /> {busy ? "a carregar…" : cvUrl ? "substituir CV" : "carregar CV"}
+            <Icon name="upload" size={14} /> {busy ? "a carregar…" : cvSeguro ? "substituir CV" : "carregar CV"}
             <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={onPick} disabled={busy} />
           </label>
-          {cvUrl && (
+          {cvSeguro && (
             <>
-              <a className="btn btn-ghost" href={cvUrl} target="_blank" rel="noopener">
+              <a className="btn btn-ghost" href={cvSeguro} target="_blank" rel="noopener noreferrer">
                 <Icon name="external" size={13} /> abrir
               </a>
               <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={remove} disabled={busy}>

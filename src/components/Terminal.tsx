@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { loc } from "../data";
 import { useLang } from "../lang";
 import { useProjects, useSetting } from "../projectsStore";
+import { openSafeExternalUrl } from "../security/url";
 import { useTheme } from "../theme";
 
 type Linha = { tipo: "entrada" | "saida" | "aviso" | "erro"; texto: string };
@@ -153,7 +154,7 @@ export default function Terminal({ gatilho, onSair }: { gatilho: string; onSair:
       case "cv":
         if (!cvUrl) { escrever([{ tipo: "erro", texto: t("não há currículo carregado de momento.", "no CV uploaded at the moment.") }]); return; }
         escrever([{ tipo: "aviso", texto: t("a descarregar o currículo…", "downloading the CV…") }]);
-        window.open(cvUrl, "_blank", "noopener");
+        openSafeExternalUrl(cvUrl);
         return;
 
       case "theme": {

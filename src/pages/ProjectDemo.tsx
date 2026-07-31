@@ -6,6 +6,7 @@ import SmartLink from "../components/SmartLink";
 import { loc, type DemoBloco, type Localized } from "../data";
 import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
+import { sanitizeExternalUrl } from "../security/url";
 import NotFound from "./NotFound";
 
 export default function ProjectDemo() {
@@ -16,6 +17,7 @@ export default function ProjectDemo() {
 
   const project = projects.find((p) => p.slug === slug || p.id === slug);
   const demo = project?.demo_config ?? null;
+  const urlSegura = demo?.tipo === "embebido" ? sanitizeExternalUrl(demo.url) : null;
 
   const copiar = (cmd: string) => {
     navigator.clipboard.writeText(cmd).then(
@@ -71,9 +73,9 @@ export default function ProjectDemo() {
 
             {project.github && (
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <a className="btn btn-primary" href={project.github} target="_blank" rel="noopener">
+                <SmartLink className="btn btn-primary" href={project.github}>
                   <Icon name="github" size={14} /> {t("GitHub Repositório", "GitHub Repository")}
-                </a>
+                </SmartLink>
               </div>
             )}
           </div>
@@ -85,19 +87,29 @@ export default function ProjectDemo() {
           {demo.tipo === "embebido" ? (
             <div>
               <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--bg-1)", boxShadow: "var(--shadow-1)" }}>
-                <iframe
-                  src={demo.url}
-                  title={`${project.title} — ${texto(demo.titulo)}`}
-                  allow="fullscreen"
-                  style={{ display: "block", width: "100%", aspectRatio: "16 / 10", minHeight: 520, border: 0 }}
-                />
+                {urlSegura ? (
+                  <iframe
+                    src={urlSegura}
+                    title={`${project.title} — ${texto(demo.titulo)}`}
+                    allow="fullscreen"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads"
+                    referrerPolicy="no-referrer"
+                    style={{ display: "block", width: "100%", aspectRatio: "16 / 10", minHeight: 520, border: 0 }}
+                  />
+                ) : (
+                  <div style={{ minHeight: 220, display: "grid", placeItems: "center", color: "var(--fg-3)", padding: 24, textAlign: "center", fontSize: 14 }}>
+                    {t("A demo não está disponível neste momento.", "The demo is not available right now.")}
+                  </div>
+                )}
               </div>
-              <p className="mono" style={{ fontSize: 12, color: "var(--fg-4)", marginTop: 12, marginBottom: 0 }}>
-                {t("Pouco espaço? ", "Feeling cramped? ")}
-                <SmartLink href={demo.url} style={{ color: "var(--accent)", textDecoration: "none" }}>
-                  {t("abrir em ecrã inteiro", "open in full screen")}
-                </SmartLink>
-              </p>
+              {urlSegura && (
+                <p className="mono" style={{ fontSize: 12, color: "var(--fg-4)", marginTop: 12, marginBottom: 0 }}>
+                  {t("Pouco espaço? ", "Feeling cramped? ")}
+                  <SmartLink href={urlSegura} style={{ color: "var(--accent)", textDecoration: "none" }}>
+                    {t("abrir em ecrã inteiro", "open in full screen")}
+                  </SmartLink>
+                </p>
+              )}
             </div>
           ) : (
             <>

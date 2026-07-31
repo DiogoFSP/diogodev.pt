@@ -84,9 +84,9 @@ function Header({ project }: { project: ProjectData }) {
               </SmartLink>
             )}
             {project.github && (
-              <a className="btn" href={project.github} target="_blank" rel="noopener">
+              <SmartLink className="btn" href={project.github}>
                 <Icon name="github" size={14} /> {t("código no GitHub", "source on GitHub")}
-              </a>
+              </SmartLink>
             )}
           </div>
         </div>

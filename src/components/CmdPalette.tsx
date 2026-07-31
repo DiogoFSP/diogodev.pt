@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useProjects, useSetting } from "../projectsStore";
 import { useLang } from "../lang";
 import { useTheme } from "../theme";
+import { openSafeExternalUrl } from "../security/url";
 import Icon from "./Icon";
 import Terminal from "./Terminal";
 
@@ -103,7 +104,7 @@ export default function CmdPalette({ open, setOpen }: Props) {
     const actions: Item[] = [
       { group: t("ações", "actions"), icon: "spark", label: theme === "dark" ? t("mudar para modo claro", "switch to light mode") : t("mudar para modo escuro", "switch to dark mode"), run: () => toggleTheme() },
       { group: t("ações", "actions"), icon: "globe", label: lang === "pt" ? "switch to English" : "mudar para Português", run: () => setLang(lang === "pt" ? "en" : "pt") },
-      ...(cvUrl ? [{ group: t("ações", "actions"), icon: "download", label: t("descarregar CV", "download CV"), run: () => { window.open(cvUrl, "_blank", "noopener"); setOpen(false); } }] : []),
+      ...(cvUrl ? [{ group: t("ações", "actions"), icon: "download", label: t("descarregar CV", "download CV"), run: () => { openSafeExternalUrl(cvUrl); setOpen(false); } }] : []),
       { group: t("ações", "actions"), icon: "command", label: t("abrir admin", "open admin"), run: () => { setOpen(false); navigate("/admin"); } },
     ];
     const links: Item[] = [

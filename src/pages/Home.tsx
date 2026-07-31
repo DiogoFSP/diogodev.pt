@@ -8,14 +8,16 @@ import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project } from "../data";
 import { useProjects, useSetting } from "../projectsStore";
 import { useLang } from "../lang";
+import { sanitizeExternalUrl } from "../security/url";
 
 // botão do CV: só aparece quando há um CV carregado no admin
 function CvButton() {
   const { t } = useLang();
   const { value: cvUrl } = useSetting("cv_url");
-  if (!cvUrl) return null;
+  const cvSeguro = cvUrl ? sanitizeExternalUrl(cvUrl) : null;
+  if (!cvSeguro) return null;
   return (
-    <a className="btn" href={cvUrl} target="_blank" rel="noopener">
+    <a className="btn" href={cvSeguro} target="_blank" rel="noopener noreferrer">
       <Icon name="download" size={14} /> {t("descarregar CV", "download CV")}
     </a>
   );
