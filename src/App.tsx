@@ -15,10 +15,26 @@ const Admin = lazy(() => import("./pages/Admin"));
 
 // repõe o scroll no topo quando a rota muda
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (!hash) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    const id = hash.slice(1);
+    let tentativas = 0;
+    let temporizador = 0;
+    const procurar = () => {
+      const alvo = document.getElementById(id);
+      if (alvo) {
+        alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (tentativas++ < 30) temporizador = window.setTimeout(procurar, 50);
+    };
+    procurar();
+    return () => window.clearTimeout(temporizador);
+  }, [pathname, hash]);
   return null;
 }
 

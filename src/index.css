@@ -315,4 +315,5 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
   .upnext-row { grid-template-columns: 84px 1fr auto; gap: 12px; }
   .navlink { padding: 8px 7px !important; }
   .nav-actions { gap: 8px !important; }
+  .hide-xs { display: none !important; }
 }

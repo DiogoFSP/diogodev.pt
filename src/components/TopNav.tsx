@@ -34,6 +34,17 @@ function ActiveLine() {
   );
 }
 
+function LinkSeccao({ id, label }: { id: string; label: string }) {
+  const { pathname, hash } = useLocation();
+  const ativo = pathname === "/" && hash === `#${id}`;
+  return (
+    <Link to={`/#${id}`} className="navlink hide-xs" style={navLinkStyle({ isActive: ativo })}>
+      {ativo && <ActiveLine />}
+      {label}
+    </Link>
+  );
+}
+
 export default function TopNav({ onPalette }: { onPalette?: () => void }) {
   const { t } = useLang();
   const { pathname } = useLocation();
@@ -85,6 +96,8 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
               </>
             )}
           </NavLink>
+          <LinkSeccao id="about" label={t("sobre", "about")} />
+          <LinkSeccao id="percurso" label={t("percurso", "path")} />
           <NavLink to="/contacto" className="navlink" style={navLinkStyle}>
             {({ isActive }) => (
               <>

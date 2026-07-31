@@ -307,7 +307,7 @@ function AboutStrip() {
   const { t } = useLang();
   const navigate = useNavigate();
   return (
-    <section id="about" style={{ padding: "140px 0 80px" }}>
+    <section id="about" style={{ padding: "140px 0 80px", scrollMarginTop: 80 }}>
       <div className="container about-grid">
         <div>
           <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>/{t("sobre", "about")}</div>
