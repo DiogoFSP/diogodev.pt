@@ -47,7 +47,7 @@ function LinkSeccao({ id, label }: { id: string; label: string }) {
 
 export default function TopNav({ onPalette }: { onPalette?: () => void }) {
   const { t } = useLang();
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   // mostra a tecla certa conforme o sistema (⌘ é do Mac)
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -88,10 +88,10 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <NavLink to="/" end className="navlink" style={navLinkStyle}>
+          <NavLink to="/" end className="navlink" style={({ isActive }) => navLinkStyle({ isActive: isActive && !hash })}>
             {({ isActive }) => (
               <>
-                {isActive && <ActiveLine />}
+                {isActive && !hash && <ActiveLine />}
                 {t("trabalhos", "work")}
               </>
             )}
