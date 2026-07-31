@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useLang } from "../lang";
 import Icon from "./Icon";
@@ -34,11 +34,18 @@ function ActiveLine() {
   );
 }
 
-function LinkSeccao({ id, label }: { id: string; label: string }) {
-  const { pathname, hash } = useLocation();
-  const ativo = pathname === "/" && hash === `#${id}`;
+function LinkSeccao({ id, label, ativo, aoAbrir }: { id: string; label: string; ativo: boolean; aoAbrir: (id: string) => void }) {
+  const { pathname } = useLocation();
+  const abrir = (e: React.MouseEvent) => {
+    aoAbrir(id);
+    const alvo = pathname === "/" ? document.getElementById(id) : null;
+    if (alvo) {
+      e.preventDefault();
+      alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
   return (
-    <Link to={`/#${id}`} className="navlink hide-xs" style={navLinkStyle({ isActive: ativo })}>
+    <Link to={`/#${id}`} onClick={abrir} className="navlink hide-xs" style={navLinkStyle({ isActive: ativo })}>
       {ativo && <ActiveLine />}
       {label}
     </Link>
@@ -48,6 +55,25 @@ function LinkSeccao({ id, label }: { id: string; label: string }) {
 export default function TopNav({ onPalette }: { onPalette?: () => void }) {
   const { t } = useLang();
   const { pathname, hash } = useLocation();
+  const [seccao, setSeccao] = useState(() => (pathname === "/" ? hash.slice(1) : ""));
+
+  useEffect(() => {
+    setSeccao(pathname === "/" ? hash.slice(1) : "");
+  }, [pathname, hash]);
+
+  useEffect(() => {
+    if (!seccao) return;
+    const sair = () => setSeccao("");
+    const opcoes = { passive: true, once: true } as const;
+    window.addEventListener("wheel", sair, opcoes);
+    window.addEventListener("touchmove", sair, opcoes);
+    window.addEventListener("keydown", sair, { once: true });
+    return () => {
+      window.removeEventListener("wheel", sair);
+      window.removeEventListener("touchmove", sair);
+      window.removeEventListener("keydown", sair);
+    };
+  }, [seccao]);
   // mostra a tecla certa conforme o sistema (⌘ é do Mac)
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -88,16 +114,16 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <NavLink to="/" end className="navlink" style={({ isActive }) => navLinkStyle({ isActive: isActive && !hash })}>
+          <NavLink to="/" end className="navlink" style={({ isActive }) => navLinkStyle({ isActive: isActive && !seccao })}>
             {({ isActive }) => (
               <>
-                {isActive && !hash && <ActiveLine />}
+                {isActive && !seccao && <ActiveLine />}
                 {t("trabalhos", "work")}
               </>
             )}
           </NavLink>
-          <LinkSeccao id="about" label={t("sobre", "about")} />
-          <LinkSeccao id="percurso" label={t("percurso", "path")} />
+          <LinkSeccao id="about" label={t("sobre", "about")} ativo={seccao === "about"} aoAbrir={setSeccao} />
+          <LinkSeccao id="percurso" label={t("percurso", "path")} ativo={seccao === "percurso"} aoAbrir={setSeccao} />
           <NavLink to="/contacto" className="navlink" style={navLinkStyle}>
             {({ isActive }) => (
               <>
