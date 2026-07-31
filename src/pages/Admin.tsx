@@ -4,6 +4,7 @@ import Icon from "../components/Icon";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import { type Project } from "../data";
+import { lerMarcos } from "../percurso";
 import { BLOCO_VAZIO, PASSO_VAZIO, fromDemoForm, pickPt, toDemoForm, toLoc, toPair, type DemoForm, type LocPair } from "../demoForm";
 import {
   deleteProject as deleteProjectRemote,
@@ -25,7 +26,7 @@ import { supabase, supabaseConfigured } from "../supabase";
 // Admin: projetos via projectsStore; auth Supabase quando configurado,
 // senão fallback local. As mensagens são lidas por email; aqui só contam.
 
-type View = "list" | "edit" | "new" | "cv" | "stats";
+type View = "list" | "edit" | "new" | "cv" | "percurso" | "stats";
 
 // ---------- login ----------
 // fallback local: hash SHA-256 das credenciais do .env.local
@@ -265,7 +266,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
             <Logo size={22} />
           </button>
           <span className="hide-sm" style={{ fontSize: 12, color: "var(--fg-4)" }}>
-            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "cv" ? "cv" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
+            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "cv" ? "cv" : view === "percurso" ? "percurso" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -288,6 +289,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         <aside className="admin-side">
           <SidebarItem icon="layers" label="projetos" count={projects.length} active={view === "list" || view === "edit" || view === "new"} onClick={() => setView("list")} />
           <SidebarItem icon="download" label="cv" active={view === "cv"} onClick={() => setView("cv")} />
+          <SidebarItem icon="clock" label="percurso" active={view === "percurso"} onClick={() => setView("percurso")} />
           <SidebarItem icon="zap" label="estatísticas" active={view === "stats"} onClick={() => setView("stats")} />
 
           <DbStatus projects={projects.length} messages={messages.length} />
@@ -302,6 +304,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
             <EditView project={editing} onSave={save} onCancel={() => setView("list")} isNew={view === "new"} />
           )}
           {view === "cv" && <CvView />}
+          {view === "percurso" && <PercursoView />}
           {view === "stats" && <StatsView />}
         </main>
       </div>
@@ -514,6 +517,90 @@ function StatsView() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------- Percurso ----------
+
+function PercursoView() {
+  const { value, loading, refresh } = useSetting("percurso");
+  const [marcos, setMarcos] = useState<{ ano: LocPair; titulo: LocPair; detalhe: LocPair }[] | null>(null);
+  const [editLang, setEditLang] = useState<"pt" | "en">("pt");
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [guardado, setGuardado] = useState(false);
+
+  const lista =
+    marcos ??
+    lerMarcos(value).map((m) => ({ ano: toPair(m.ano), titulo: toPair(m.titulo), detalhe: toPair(m.detalhe) }));
+
+  const alterar = (novos: typeof lista) => { setMarcos(novos); setGuardado(false); };
+  const lv = (p: LocPair) => p[editLang];
+  const comLingua = (p: LocPair, v: string): LocPair => ({ ...p, [editLang]: v });
+
+  const guardar = async () => {
+    setBusy(true);
+    setErro(null);
+    try {
+      const limpos = lista
+        .filter((m) => m.ano.pt.trim() && m.titulo.pt.trim())
+        .map((m) => ({ ano: toLoc(m.ano), titulo: toLoc(m.titulo), detalhe: toLoc(m.detalhe) }));
+      await setSetting("percurso", limpos.length ? JSON.stringify(limpos) : null);
+      refresh();
+      setMarcos(null);
+      setGuardado(true);
+    } catch {
+      setErro("Não foi possível guardar — tentar novamente.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <div style={{ color: "var(--fg-3)" }}>a carregar…</div>;
+
+  return (
+    <div style={{ maxWidth: 640 }}>
+      <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>/percurso</div>
+      <h2 style={{ margin: "0 0 8px", fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em" }}>Percurso</h2>
+      <p style={{ color: "var(--fg-3)", fontSize: 13, marginTop: 0, marginBottom: 24 }}>
+        Formação e outros marcos que aparecem na linha do tempo da página inicial, misturados com os projetos por ano.
+        Os projetos entram sozinhos.
+      </p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        {([["pt", "português"], ["en", "english"]] as const).map(([v, label]) => (
+          <button key={v} type="button" onClick={() => setEditLang(v)} style={{ background: editLang === v ? "var(--bg-2)" : "var(--bg-1)", border: `1px solid ${editLang === v ? "var(--accent)" : "var(--line)"}`, borderRadius: "var(--r-md)", padding: "10px", cursor: "pointer", color: editLang === v ? "var(--fg)" : "var(--fg-3)", fontSize: 13 }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {lista.map((m, i) => (
+          <div key={i} style={{ border: "1px solid var(--line)", borderRadius: "var(--r-md)", padding: 14, display: "flex", flexDirection: "column", gap: 8, background: "var(--bg-1)" }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input className="input mono" style={{ maxWidth: 150 }} value={lv(m.ano)} onChange={(e) => alterar(lista.map((x, j) => (j === i ? { ...x, ano: comLingua(x.ano, e.target.value) } : x)))} placeholder={editLang === "en" && m.ano.pt ? m.ano.pt : "Julho 2024"} />
+              <input className="input" value={lv(m.titulo)} onChange={(e) => alterar(lista.map((x, j) => (j === i ? { ...x, titulo: comLingua(x.titulo, e.target.value) } : x)))} placeholder={editLang === "en" && m.titulo.pt ? m.titulo.pt : "Entrada em Engenharia Informática"} />
+              <button type="button" className="btn btn-icon" title="remover" onClick={() => alterar(lista.filter((_, j) => j !== i))}>
+                <Icon name="trash" size={13} />
+              </button>
+            </div>
+            <input className="input" value={lv(m.detalhe)} onChange={(e) => alterar(lista.map((x, j) => (j === i ? { ...x, detalhe: comLingua(x.detalhe, e.target.value) } : x)))} placeholder={editLang === "en" && m.detalhe.pt ? m.detalhe.pt : "ISEC · Coimbra"} />
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+        <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={() => alterar([...lista, { ano: "", titulo: { pt: "", en: "" }, detalhe: { pt: "", en: "" } }])}>
+          <Icon name="plus" size={12} /> marco
+        </button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={guardar}>
+          <Icon name="check" size={14} /> {busy ? "a guardar…" : "guardar"}
+        </button>
+        {guardado && <span className="mono" style={{ fontSize: 12, color: "var(--ok, #27C93F)", alignSelf: "center" }}>guardado</span>}
+        {erro && <span className="mono" style={{ fontSize: 12, color: "var(--danger)", alignSelf: "center" }}>{erro}</span>}
+      </div>
     </div>
   );
 }
