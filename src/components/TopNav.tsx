@@ -74,6 +74,25 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
       window.removeEventListener("keydown", sair);
     };
   }, [seccao]);
+  const trabalhosAtivo = !seccao || seccao === "work";
+
+  // já na página inicial: sobe ao topo em vez de "navegar"
+  const irParaTopo = (e: React.MouseEvent) => {
+    if (pathname !== "/") return;
+    e.preventDefault();
+    setSeccao("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const irParaTrabalhos = (e: React.MouseEvent) => {
+    if (pathname !== "/") return;
+    const alvo = document.getElementById("work");
+    if (!alvo) return;
+    e.preventDefault();
+    setSeccao("work");
+    alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   // mostra a tecla certa conforme o sistema (⌘ é do Mac)
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -102,22 +121,16 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
           to="/"
           className="mono"
           style={{ color: "var(--fg)", textDecoration: "none", fontSize: 13 }}
-          onClick={(e) => {
-            // já na página inicial: sobe ao topo em vez de "navegar"
-            if (pathname === "/") {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }}
+          onClick={irParaTopo}
         >
           <Logo />
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <NavLink to="/" end className="navlink" style={({ isActive }) => navLinkStyle({ isActive: isActive && !seccao })}>
+          <NavLink to="/" end className="navlink" onClick={irParaTrabalhos} style={({ isActive }) => navLinkStyle({ isActive: isActive && trabalhosAtivo })}>
             {({ isActive }) => (
               <>
-                {isActive && !seccao && <ActiveLine />}
+                {isActive && trabalhosAtivo && <ActiveLine />}
                 {t("trabalhos", "work")}
               </>
             )}
