@@ -9,6 +9,7 @@ import { loc, type Project } from "../data";
 import { useProjects } from "../projectsStore";
 import { useLang } from "../lang";
 import { useCv, ROTULO_CV } from "../cv";
+import { useTitulo } from "../seo";
 
 // botão do CV: só aparece quando há um CV carregado no admin
 function CvButton() {
@@ -247,7 +248,7 @@ function ProjectsHeader({ count }: { count: number }) {
 
 // tamanhos: wide (2 colunas), tall (1 coluna x 2 linhas), small (1x1)
 function BentoCard({ project, size, onOpen }: { project: Project; size: Project["featured"]; onOpen: () => void }) {
-  const { lang } = useLang();
+  const { t, lang } = useLang();
   const cardRef = useRef<HTMLElement>(null);
   const [hover, setHover] = useState(false);
 
@@ -316,8 +317,8 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
           {project.year} · {loc(project.role, lang)}
         </div>
         <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6 }}>
-          {project.github && <QuickLink href={project.github} icon="github" label="repo" hover={hover} />}
-          {project.demo && <QuickLink href={project.demo} icon="external" label="live" hover={hover} delay={60} />}
+          {project.github && <QuickLink href={project.github} icon="github" label={t("{p} no GitHub", "{p} on GitHub").replace("{p}", project.title)} hover={hover} />}
+          {project.demo && <QuickLink href={project.demo} icon="external" label={t("ver {p} a funcionar", "see {p} running").replace("{p}", project.title)} hover={hover} delay={60} />}
         </div>
       </div>
 
@@ -374,6 +375,7 @@ function QuickLink({ href, icon, label, hover, delay = 0 }: { href: string; icon
       href={href}
       onClick={(e) => e.stopPropagation()}
       title={label}
+      aria-label={label}
       style={{
         width: 32,
         height: 32,
@@ -442,6 +444,7 @@ function AboutStrip() {
 
 export default function Home() {
   const navigate = useNavigate();
+  useTitulo(null);
   const { projects: all } = useProjects();
   const projects = all.filter((p) => p.status !== "hidden");
 

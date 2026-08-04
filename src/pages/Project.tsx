@@ -7,12 +7,14 @@ import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project as ProjectData } from "../data";
 import { useProjects } from "../projectsStore";
 import { useLang } from "../lang";
+import { useTitulo } from "../seo";
 
 export default function Project() {
   const { slug } = useParams();
   const { t } = useLang();
   const { projects, loading } = useProjects();
   const project = projects.find((p) => p.slug === slug);
+  useTitulo(project ? project.title : loading ? null : t("Projeto não encontrado", "Project not found"));
 
   // evita mostrar o 404 enquanto os dados carregam
   if (loading) return <main style={{ minHeight: "60vh" }} />;

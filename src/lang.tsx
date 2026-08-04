@@ -22,18 +22,10 @@ export function LangProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("diogo-lang", lang);
     document.documentElement.lang = lang;
 
-    // atualiza título e meta description conforme a língua
-    const meta = lang === "en"
-      ? {
-          title: "Diogo Pinto — Software Developer | Computer Engineering @ ISEC",
-          desc: "Portfolio of Diogo Pinto, Computer Engineering student at ISEC and IT Technician. Software development in Java, JavaFX and React, with an interest in artificial intelligence.",
-        }
-      : {
-          title: "Diogo Pinto — Desenvolvedor de Software | Eng.ª Informática ISEC",
-          desc: "Portfólio de Diogo Pinto, estudante de Engenharia Informática no ISEC e Técnico de Informática. Desenvolvimento de software em Java, JavaFX e React, com interesse em inteligência artificial.",
-        };
-    document.title = meta.title;
-    document.querySelector('meta[name="description"]')?.setAttribute("content", meta.desc);
+    const desc = lang === "en"
+      ? "Portfolio of Diogo Pinto, Computer Engineering student at ISEC and IT Technician. Software development in Java, JavaFX and React, with an interest in artificial intelligence."
+      : "Portfólio de Diogo Pinto, estudante de Engenharia Informática no ISEC e Técnico de Informática. Desenvolvimento de software em Java, JavaFX e React, com interesse em inteligência artificial.";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", desc);
     document.querySelector('meta[property="og:locale"]')?.setAttribute("content", lang === "en" ? "en_US" : "pt_PT");
   }, [lang]);
 

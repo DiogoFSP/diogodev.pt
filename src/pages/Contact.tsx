@@ -5,6 +5,7 @@ import Icon from "../components/Icon";
 import { addMessage, sendConfirmation } from "../projectsStore";
 import { MENSAGEM_MINIMA, validarContacto, type CampoContacto, type ErroContacto } from "../contactRules";
 import { useLang } from "../lang";
+import { useTitulo } from "../seo";
 
 // Web3Forms — entrega das mensagens por email (a access key é pública)
 const WEB3FORMS_KEY = "fdd122e8-4261-4e85-be7c-2216367e87b8";
@@ -52,6 +53,7 @@ async function domainAcceptsEmail(email: string): Promise<boolean> {
 
 export default function Contact() {
   const { t, lang } = useLang();
+  useTitulo(t("Contacto", "Contact"));
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
   const [sending, setSending] = useState(false);
@@ -235,7 +237,7 @@ export default function Contact() {
           </Field>
 
           {/* honeypot */}
-          <input type="text" name="company" value={form.honeypot} onChange={(e) => update("honeypot", e.target.value)} tabIndex={-1} autoComplete="off" style={{ position: "absolute", left: "-9999px", height: 0, width: 0, opacity: 0 }} />
+          <input type="text" name="company" value={form.honeypot} onChange={(e) => update("honeypot", e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, width: 0, opacity: 0 }} />
 
           {error && <div style={{ color: "var(--danger)", fontSize: 13 }}>{error}</div>}
 

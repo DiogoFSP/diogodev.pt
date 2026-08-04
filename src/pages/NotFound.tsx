@@ -2,9 +2,11 @@ import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import { useLang } from "../lang";
+import { useTitulo } from "../seo";
 
 export default function NotFound() {
   const { t } = useLang();
+  useTitulo(t("Página não encontrada", "Page not found"));
 
   return (
     <main style={{ minHeight: "calc(100vh - 60px)", display: "flex", flexDirection: "column", justifyContent: "space-between", animation: "fadeIn 380ms var(--ease-out)" }}>

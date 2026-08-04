@@ -8,6 +8,7 @@ import { lerMarcos } from "../percurso";
 import { BLOCO_VAZIO, PASSO_VAZIO, fromDemoForm, pickPt, toDemoForm, toLoc, toPair, type DemoForm, type LocPair } from "../demoForm";
 import { CHAVE_CV } from "../cv";
 import { type Lang } from "../lang";
+import { useTitulo } from "../seo";
 import {
   deleteProject as deleteProjectRemote,
   fetchMessages,
@@ -44,6 +45,7 @@ async function sha256Hex(s: string): Promise<string> {
 }
 
 export default function Admin() {
+  useTitulo("Admin");
   // sessão: Supabase quando configurado, senão sessionStorage
   const [authed, setAuthed] = useState<boolean | null>(() =>
     supabaseConfigured ? null : sessionStorage.getItem(SESSION_KEY) === "1"

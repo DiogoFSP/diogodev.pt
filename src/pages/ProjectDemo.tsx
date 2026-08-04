@@ -6,6 +6,7 @@ import SmartLink from "../components/SmartLink";
 import { loc, type DemoBloco, type Localized } from "../data";
 import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
+import { useTitulo } from "../seo";
 import { sanitizeExternalUrl } from "../security/url";
 import NotFound from "./NotFound";
 
@@ -28,6 +29,8 @@ export default function ProjectDemo() {
       () => {}
     );
   };
+
+  useTitulo(project && demo ? `${project.title} — ${loc(demo.titulo, lang)}` : null);
 
   if (loading) return <main style={{ minHeight: "60vh" }} />;
   if (!project || !demo) return <NotFound />;
