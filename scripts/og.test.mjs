@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { IMAGEM_OMISSAO, cortar, escapar, loc, paginaDoProjeto } from "./og.mjs";
+import { IMAGEM_OMISSAO, cortar, escapar, loc, paginaDaDemo, paginaDoProjeto, paginaSimples, sitemap } from "./og.mjs";
 
 const INDEX = await readFile(path.resolve(import.meta.dirname, "..", "index.html"), "utf-8");
 
@@ -50,6 +50,57 @@ describe("paginaDoProjeto", () => {
   it("não deixa aspas do conteúdo partir o atributo", () => {
     const comAspas = paginaDoProjeto(INDEX, { ...PROJETO, title: 'Jogo "Especial" & Cia' }, true);
     expect(meta(comAspas, "og:title")).toBe("Jogo &quot;Especial&quot; &amp; Cia — Diogo Pinto");
+  });
+});
+
+describe("paginaSimples", () => {
+  const html = paginaSimples(INDEX, {
+    titulo: "Contact — Diogo Pinto",
+    descricao: "Fala comigo.",
+    url: "https://diogodev.pt/contacto",
+  });
+
+  it("aponta o canonical para a própria página e não para a raiz", () => {
+    expect(html).toContain('<link rel="canonical" href="https://diogodev.pt/contacto"');
+    expect(meta(html, "og:url")).toBe("https://diogodev.pt/contacto");
+  });
+
+  it("mantém og:type website, ao contrário das páginas de projeto", () => {
+    expect(meta(html, "og:type")).toBe("website");
+  });
+
+  it("usa a imagem do site quando não lhe dão outra", () => {
+    expect(meta(html, "og:image")).toBe(IMAGEM_OMISSAO);
+  });
+});
+
+describe("paginaDaDemo", () => {
+  const comDemo = { ...PROJETO, demo_config: { titulo: { pt: "Como Jogar", en: "How to Play" } } };
+  const html = paginaDaDemo(INDEX, comDemo, true);
+
+  it("junta o nome da demo ao título e aponta para /demo", () => {
+    expect(html).toContain("<title>Deep Sea Mining — How to Play</title>");
+    expect(meta(html, "og:url")).toBe("https://diogodev.pt/projeto/deepsea/demo");
+    expect(html).toContain('<link rel="canonical" href="https://diogodev.pt/projeto/deepsea/demo"');
+  });
+
+  it("aguenta um projeto sem titulo na demo", () => {
+    const semTitulo = paginaDaDemo(INDEX, { ...PROJETO, demo_config: {} }, false);
+    expect(semTitulo).toContain("<title>Deep Sea Mining — Demo</title>");
+  });
+});
+
+describe("sitemap", () => {
+  it("escreve um urlset com uma entrada por endereço", () => {
+    const xml = sitemap(["https://diogodev.pt/", "https://diogodev.pt/contacto"]);
+    expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+    expect(xml).toContain("<loc>https://diogodev.pt/</loc>");
+    expect(xml).toContain("<loc>https://diogodev.pt/contacto</loc>");
+    expect(xml.match(/<url>/g)).toHaveLength(2);
+  });
+
+  it("escapa caracteres que partem XML", () => {
+    expect(sitemap(["https://diogodev.pt/?a=1&b=2"])).toContain("a=1&amp;b=2");
   });
 });
 

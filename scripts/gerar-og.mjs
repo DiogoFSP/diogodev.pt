@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { paginaDoProjeto } from "./og.mjs";
+import { SITE, paginaDaDemo, paginaDoProjeto, paginaSimples, sitemap } from "./og.mjs";
 import { gerarImagens } from "./gerar-thumbs.mjs";
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
@@ -29,7 +29,7 @@ if (!url || !chave) {
 }
 
 const resposta = await fetch(
-  `${url}/rest/v1/projects?select=id,slug,title,summary,tagline,image,gallery,status&status=eq.published`,
+  `${url}/rest/v1/projects?select=id,slug,title,summary,tagline,image,gallery,status,demo_config&status=eq.published`,
   { headers: { apikey: chave, Authorization: `Bearer ${chave}` } }
 );
 if (!resposta.ok) {
@@ -44,11 +44,32 @@ const imagens = await gerarImagens(projetos);
 
 await mkdir(path.join(DIST, "projeto"), { recursive: true });
 
-for (const p of projetos) {
-  const html = paginaDoProjeto(base, p, imagens.has(p.slug));
-  await mkdir(path.join(DIST, "projeto", p.slug), { recursive: true });
-  await writeFile(path.join(DIST, "projeto", p.slug, "index.html"), html, "utf-8");
-  await writeFile(path.join(DIST, "projeto", `${p.slug}.html`), html, "utf-8");
+const enderecos = [`${SITE}/`, `${SITE}/contacto`];
+
+async function escrever(destino, html) {
+  await mkdir(path.join(DIST, path.dirname(destino)), { recursive: true });
+  await writeFile(path.join(DIST, `${destino}.html`), html, "utf-8");
+  await mkdir(path.join(DIST, destino), { recursive: true });
+  await writeFile(path.join(DIST, destino, "index.html"), html, "utf-8");
 }
 
-console.log(`[og] ${projetos.length} páginas geradas · ${imagens.size} imagens a partir das miniaturas`);
+let demos = 0;
+for (const p of projetos) {
+  await escrever(path.join("projeto", p.slug), paginaDoProjeto(base, p, imagens.has(p.slug)));
+  enderecos.push(`${SITE}/projeto/${p.slug}`);
+  if (p.demo_config) {
+    await escrever(path.join("projeto", p.slug, "demo"), paginaDaDemo(base, p, imagens.has(p.slug)));
+    enderecos.push(`${SITE}/projeto/${p.slug}/demo`);
+    demos++;
+  }
+}
+
+await escrever("contacto", paginaSimples(base, {
+  titulo: "Contact — Diogo Pinto",
+  descricao: "Get in touch with Diogo Pinto about internships, projects and collaborations.",
+  url: `${SITE}/contacto`,
+}));
+
+await writeFile(path.join(DIST, "sitemap.xml"), sitemap(enderecos), "utf-8");
+
+console.log(`[og] ${projetos.length} projetos · ${demos} demos · contacto · sitemap com ${enderecos.length} urls · ${imagens.size} imagens`);
