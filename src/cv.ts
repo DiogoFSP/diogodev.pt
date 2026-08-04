@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useSetting } from "./projectsStore";
 import { sanitizeExternalUrl } from "./security/url";
 import { useLang, type Lang } from "./lang";
@@ -12,6 +12,21 @@ export const ROTULO_CV: Record<Lang, { pt: string; en: string }> = {
   en: { pt: "inglês", en: "English" },
 };
 
+export const NOME_CV: Record<Lang, string> = {
+  pt: "CV-Diogo-Pinto-PT.pdf",
+  en: "CV-Diogo-Pinto-EN.pdf",
+};
+
+export function comNomeDeFicheiro(url: string, lang: Lang): string {
+  try {
+    const alvo = new URL(url);
+    alvo.searchParams.set("download", NOME_CV[lang]);
+    return alvo.toString();
+  } catch {
+    return url;
+  }
+}
+
 export function cvsDisponiveis(pt: string | null, en: string | null, lang: Lang): CvDisponivel[] {
   const urls: Record<Lang, string | null> = { pt, en };
   const ordem: Lang[] = lang === "en" ? ["en", "pt"] : ["pt", "en"];
@@ -19,7 +34,7 @@ export function cvsDisponiveis(pt: string | null, en: string | null, lang: Lang)
   for (const l of ordem) {
     const bruto = urls[l];
     const url = bruto ? sanitizeExternalUrl(bruto) : null;
-    if (url) lista.push({ lang: l, url });
+    if (url) lista.push({ lang: l, url: comNomeDeFicheiro(url, l) });
   }
   return lista;
 }
@@ -34,11 +49,10 @@ export function escolherCv(lista: CvDisponivel[], pedido?: string): CvDisponivel
 
 export function useCv() {
   const { lang } = useLang();
-  const { value: pt, loading: aPt, refresh: refrescarPt } = useSetting(CHAVE_CV.pt);
-  const { value: en, loading: aEn, refresh: refrescarEn } = useSetting(CHAVE_CV.en);
+  const { value: pt } = useSetting(CHAVE_CV.pt);
+  const { value: en } = useSetting(CHAVE_CV.en);
 
   const disponiveis = useMemo(() => cvsDisponiveis(pt, en, lang), [pt, en, lang]);
-  const refresh = useCallback(() => { refrescarPt(); refrescarEn(); }, [refrescarPt, refrescarEn]);
 
-  return { disponiveis, bruto: { pt, en }, loading: aPt || aEn, refresh };
+  return { disponiveis };
 }
