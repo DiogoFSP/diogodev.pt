@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loc } from "../data";
 import { useLang } from "../lang";
-import { useProjects, useSetting } from "../projectsStore";
+import { useProjects } from "../projectsStore";
+import { useCv, escolherCv, ROTULO_CV } from "../cv";
 import { openSafeExternalUrl } from "../security/url";
 import { useTheme } from "../theme";
 
@@ -24,7 +25,7 @@ export default function Terminal({ gatilho, onSair }: { gatilho: string; onSair:
   const { t, lang, setLang } = useLang();
   const { theme, toggleTheme } = useTheme();
   const { projects } = useProjects();
-  const { value: cvUrl } = useSetting("cv_url");
+  const { disponiveis: cvs } = useCv();
   const navigate = useNavigate();
 
   const [linhas, setLinhas] = useState<Linha[]>([]);
@@ -95,7 +96,7 @@ export default function Terminal({ gatilho, onSair }: { gatilho: string; onSair:
           linha("ls", t("lista os projetos", "list the projects")),
           linha(`cat ${alvo}`, t("detalhes de um projeto", "details of a project")),
           linha(`open ${alvo}`, t("abre a página do projeto", "open the project page")),
-          linha("cv", t("descarrega o currículo", "download the CV")),
+          linha("cv [pt|en]", t("descarrega o currículo", "download the CV")),
           linha("theme [dark|light]", t("muda o tema", "switch theme")),
           linha("lang [pt|en]", t("muda a língua", "switch language")),
           linha("neofetch", t("informação do sistema", "system information")),
@@ -151,11 +152,19 @@ export default function Terminal({ gatilho, onSair }: { gatilho: string; onSair:
         return;
       }
 
-      case "cv":
-        if (!cvUrl) { escrever([{ tipo: "erro", texto: t("não há currículo carregado de momento.", "no CV uploaded at the moment.") }]); return; }
-        escrever([{ tipo: "aviso", texto: t("a descarregar o currículo…", "downloading the CV…") }]);
-        openSafeExternalUrl(cvUrl);
+      case "cv": {
+        if (!cvs.length) { escrever([{ tipo: "erro", texto: t("não há currículo carregado de momento.", "no CV uploaded at the moment.") }]); return; }
+        const escolhido = escolherCv(cvs, arg);
+        if (!escolhido) {
+          const linguas = cvs.map((c) => c.lang).join(", ");
+          escrever([{ tipo: "erro", texto: t(`não há currículo em '${arg}'. disponível: ${linguas}.`, `no CV in '${arg}'. available: ${linguas}.`) }]);
+          return;
+        }
+        const nome = t(ROTULO_CV[escolhido.lang].pt, ROTULO_CV[escolhido.lang].en);
+        escrever([{ tipo: "aviso", texto: t(`a descarregar o currículo (${nome})…`, `downloading the CV (${nome})…`) }]);
+        openSafeExternalUrl(escolhido.url);
         return;
+      }
 
       case "theme": {
         const alvo = arg === "dark" || arg === "light" ? arg : theme === "dark" ? "light" : "dark";

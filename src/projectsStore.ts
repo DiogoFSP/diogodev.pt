@@ -90,7 +90,6 @@ export async function deleteProject(id: string): Promise<void> {
   saveLocalProjects(loadLocalProjects().filter((x) => x.id !== id));
 }
 
-// carregamento partilhado: vários componentes usam useProjects() na mesma página
 let cacheProjetos: Project[] | null = null;
 let pedidoEmCurso: Promise<Project[]> | null = null;
 const ouvintes = new Set<(lista: Project[]) => void>();
@@ -212,7 +211,6 @@ export async function setSetting(key: string, value: string | null): Promise<voi
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch { /* sem storage */ }
 }
 
-// mesma partilha que nos projetos; o cv_url é pedido por três componentes
 const cacheDefinicoes = new Map<string, string | null>();
 const pedidosDefinicoes = new Map<string, Promise<string | null>>();
 const ouvintesDefinicoes = new Map<string, Set<(v: string | null) => void>>();

@@ -6,6 +6,8 @@ import ThemeToggle from "../components/ThemeToggle";
 import { type Project } from "../data";
 import { lerMarcos } from "../percurso";
 import { BLOCO_VAZIO, PASSO_VAZIO, fromDemoForm, pickPt, toDemoForm, toLoc, toPair, type DemoForm, type LocPair } from "../demoForm";
+import { CHAVE_CV } from "../cv";
+import { type Lang } from "../lang";
 import {
   deleteProject as deleteProjectRemote,
   fetchMessages,
@@ -609,7 +611,27 @@ function PercursoView() {
 // ---------- CV ----------
 
 function CvView() {
-  const { value: cvUrl, loading, refresh } = useSetting("cv_url");
+  return (
+    <div style={{ maxWidth: 560 }}>
+      <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>/cv</div>
+      <h2 style={{ margin: "0 0 24px", fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em" }}>Currículo</h2>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <SlotCv lang="pt" titulo="Português" />
+        <SlotCv lang="en" titulo="Inglês" />
+      </div>
+
+      <div className="mono" style={{ fontSize: 10.5, color: "var(--fg-4)", lineHeight: 1.6, marginTop: 14 }}>
+        pdf até 8 MB — fica no Supabase Storage. O botão no site aparece com pelo menos um CV;
+        com os dois, passa a menu de escolha da língua
+      </div>
+    </div>
+  );
+}
+
+function SlotCv({ lang, titulo }: { lang: Lang; titulo: string }) {
+  const chave = CHAVE_CV[lang];
+  const { value: cvUrl, loading, refresh } = useSetting(chave);
   const cvSeguro = cvUrl ? sanitizeExternalUrl(cvUrl) : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -623,8 +645,8 @@ function CvView() {
     setBusy(true);
     setError(null);
     try {
-      const url = await uploadThumb(file, "cv");
-      await setSetting("cv_url", url);
+      const url = await uploadThumb(file, `cv-${lang}`);
+      await setSetting(chave, url);
       refresh();
     } catch {
       setError("Não foi possível carregar — confirmar a migração do CV no Supabase.");
@@ -634,11 +656,11 @@ function CvView() {
   };
 
   const remove = async () => {
-    if (!confirm("Remover o CV? O botão de descarregar desaparece do site.")) return;
+    if (!confirm(`Remover o CV em ${titulo.toLowerCase()}?`)) return;
     setBusy(true);
     setError(null);
     try {
-      await setSetting("cv_url", null);
+      await setSetting(chave, null);
       refresh();
     } catch {
       setError("Não foi possível remover — tentar novamente.");
@@ -648,38 +670,32 @@ function CvView() {
   };
 
   return (
-    <div style={{ maxWidth: 560 }}>
-      <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>/cv</div>
-      <h2 style={{ margin: "0 0 24px", fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em" }}>Currículo</h2>
-
-      <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 999, background: loading ? "var(--fg-4)" : cvUrl ? "var(--success)" : "var(--warn)", boxShadow: cvUrl ? "0 0 8px var(--success)" : "none" }} />
-          <span style={{ fontSize: 14 }}>
-            {loading ? "a verificar…" : cvSeguro ? "CV carregado — o botão de descarregar está visível no site." : cvUrl ? "CV inválido — voltar a carregar o ficheiro." : "Sem CV — o botão de descarregar não aparece no site."}
-          </span>
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <label className="btn" style={{ cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>
-            <Icon name="upload" size={14} /> {busy ? "a carregar…" : cvSeguro ? "substituir CV" : "carregar CV"}
-            <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={onPick} disabled={busy} />
-          </label>
-          {cvSeguro && (
-            <>
-              <a className="btn btn-ghost" href={cvSeguro} target="_blank" rel="noopener noreferrer">
-                <Icon name="external" size={13} /> abrir
-              </a>
-              <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={remove} disabled={busy}>
-                <Icon name="trash" size={12} /> remover
-              </button>
-            </>
-          )}
-        </div>
-        {error && <div style={{ color: "var(--danger)", fontSize: 12 }}>{error}</div>}
-        <div className="mono" style={{ fontSize: 10.5, color: "var(--fg-4)", lineHeight: 1.5 }}>
-          pdf até 8 MB — fica no Supabase Storage; o site só mostra o botão quando existe um CV
-        </div>
+    <div style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ width: 8, height: 8, borderRadius: 999, background: loading ? "var(--fg-4)" : cvUrl ? "var(--success)" : "var(--warn)", boxShadow: cvUrl ? "0 0 8px var(--success)" : "none" }} />
+        <span style={{ fontSize: 14 }}>{titulo}</span>
+        <span className="mono" style={{ fontSize: 10, color: "var(--fg-4)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{lang}</span>
+        <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--fg-3)" }}>
+          {loading ? "a verificar…" : cvSeguro ? "carregado" : cvUrl ? "ficheiro inválido" : "sem CV"}
+        </span>
       </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <label className="btn" style={{ cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>
+          <Icon name="upload" size={14} /> {busy ? "a carregar…" : cvSeguro ? "substituir" : "carregar"}
+          <input type="file" accept="application/pdf" style={{ display: "none" }} onChange={onPick} disabled={busy} />
+        </label>
+        {cvSeguro && (
+          <>
+            <a className="btn btn-ghost" href={cvSeguro} target="_blank" rel="noopener noreferrer">
+              <Icon name="external" size={13} /> abrir
+            </a>
+            <button type="button" className="btn btn-ghost mono" style={{ fontSize: 11 }} onClick={remove} disabled={busy}>
+              <Icon name="trash" size={12} /> remover
+            </button>
+          </>
+        )}
+      </div>
+      {error && <div style={{ color: "var(--danger)", fontSize: 12 }}>{error}</div>}
     </div>
   );
 }
