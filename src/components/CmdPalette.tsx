@@ -91,7 +91,7 @@ export default function CmdPalette({ open, setOpen }: Props) {
   const items = useMemo<Item[]>(() => {
     const nav: Item[] = [
       { group: t("navegação", "navigation"), icon: "code", label: `${t("ir para", "go to")} · ${t("trabalhos", "work")}`, run: () => goSection("work") },
-      { group: t("navegação", "navigation"), icon: "layers", label: `${t("ir para", "go to")} · ${t("sobre", "about")}`, run: () => goSection("about") },
+      { group: t("navegação", "navigation"), icon: "layers", label: `${t("ir para", "go to")} · ${t("sobre", "about")}`, run: () => { setOpen(false); navigate("/sobre"); } },
       { group: t("navegação", "navigation"), icon: "edit", label: t("abrir formulário de contacto", "open contact form"), run: () => { setOpen(false); navigate("/contacto"); } },
     ];
     const projs: Item[] = allProjects

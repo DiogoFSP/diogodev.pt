@@ -4,8 +4,10 @@ import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import { addMessage, sendConfirmation } from "../projectsStore";
 import { MENSAGEM_MINIMA, validarContacto, type CampoContacto, type ErroContacto } from "../contactRules";
+import { loc } from "../data";
 import { useLang } from "../lang";
 import { useTitulo } from "../seo";
+import { useSobre } from "../sobre";
 
 // Web3Forms — entrega das mensagens por email (a access key é pública)
 const WEB3FORMS_KEY = "fdd122e8-4261-4e85-be7c-2216367e87b8";
@@ -53,6 +55,7 @@ async function domainAcceptsEmail(email: string): Promise<boolean> {
 
 export default function Contact() {
   const { t, lang } = useLang();
+  const { conteudo: { disponivel } } = useSobre();
   useTitulo(t("Contacto", "Contact"));
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
@@ -265,8 +268,9 @@ export default function Contact() {
               {t("disponível para", "available for")}
             </div>
             <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)", lineHeight: 1.9 }}>
-              <li>{t("Estágios curriculares e profissionais", "Curricular and professional internships")}</li>
-              <li>{t("Colaborações em projetos", "Project collaborations")}</li>
+              {disponivel.map((d, i) => (
+                <li key={i}>{loc(d, lang)}</li>
+              ))}
             </ul>
           </div>
         </aside>

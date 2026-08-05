@@ -21,6 +21,7 @@ export default function Footer() {
         <div className="mono">© 2026 · diogodev.pt</div>
         <div className="mono" style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
           <Link to="/" style={linkStyle}>{t("início", "home")}</Link>
+          <Link to="/sobre" style={linkStyle}>{t("sobre", "about")}</Link>
           <Link to="/contacto" style={linkStyle}>{t("contacto", "contact")}</Link>
           <a href="https://github.com/DiogoFSP" target="_blank" rel="noopener" style={linkStyle}>github</a>
           <a href="https://www.linkedin.com/in/diogofspinto17/" target="_blank" rel="noopener" style={linkStyle}>linkedin</a>

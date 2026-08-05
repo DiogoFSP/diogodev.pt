@@ -44,7 +44,7 @@ const imagens = await gerarImagens(projetos);
 
 await mkdir(path.join(DIST, "projeto"), { recursive: true });
 
-const enderecos = [`${SITE}/`, `${SITE}/contacto`];
+const enderecos = [`${SITE}/`, `${SITE}/sobre`, `${SITE}/contacto`];
 
 async function escrever(destino, html) {
   await mkdir(path.join(DIST, path.dirname(destino)), { recursive: true });
@@ -64,6 +64,13 @@ for (const p of projetos) {
   }
 }
 
+await escrever("sobre", paginaSimples(base, {
+  titulo: "About — Diogo Pinto",
+  descricao:
+    "Computer Engineering student at ISEC, Coimbra, with two completed software internships. Skills, experience and education of Diogo Pinto.",
+  url: `${SITE}/sobre`,
+}));
+
 await escrever("contacto", paginaSimples(base, {
   titulo: "Contact — Diogo Pinto",
   descricao: "Get in touch with Diogo Pinto about internships, projects and collaborations.",
@@ -72,4 +79,4 @@ await escrever("contacto", paginaSimples(base, {
 
 await writeFile(path.join(DIST, "sitemap.xml"), sitemap(enderecos), "utf-8");
 
-console.log(`[og] ${projetos.length} projetos · ${demos} demos · contacto · sitemap com ${enderecos.length} urls · ${imagens.size} imagens`);
+console.log(`[og] ${projetos.length} projetos · ${demos} demos · sobre · contacto · sitemap com ${enderecos.length} urls · ${imagens.size} imagens`);

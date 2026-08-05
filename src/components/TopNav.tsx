@@ -135,8 +135,15 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
               </>
             )}
           </NavLink>
-          <LinkSeccao id="about" label={t("sobre", "about")} ativo={seccao === "about"} aoAbrir={setSeccao} />
           <LinkSeccao id="percurso" label={t("percurso", "path")} ativo={seccao === "percurso"} aoAbrir={setSeccao} />
+          <NavLink to="/sobre" className="navlink" style={navLinkStyle}>
+            {({ isActive }) => (
+              <>
+                {isActive && <ActiveLine />}
+                {t("sobre", "about")}
+              </>
+            )}
+          </NavLink>
           <NavLink to="/contacto" className="navlink" style={navLinkStyle}>
             {({ isActive }) => (
               <>

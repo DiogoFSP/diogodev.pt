@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import Project from "./pages/Project";
 import ProjectDemo from "./pages/ProjectDemo";
+import Sobre from "./pages/Sobre";
 import { recordPageView } from "./projectsStore";
 
 // o admin fica num ficheiro à parte; os visitantes não precisam dele
@@ -64,6 +65,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/projeto/:slug" element={<Project />} />
           <Route path="/projeto/:slug/demo" element={<ProjectDemo />} />
+          <Route path="/sobre" element={<Sobre />} />
           <Route path="/contacto" element={<Contact />} />
           <Route
             path="/admin"

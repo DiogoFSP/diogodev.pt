@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import CvButton from "../components/CvButton";
 import Footer from "../components/Footer";
 import Percurso from "../components/Percurso";
 import Icon from "../components/Icon";
@@ -8,118 +9,7 @@ import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project } from "../data";
 import { useProjects } from "../projectsStore";
 import { useLang } from "../lang";
-import { useCv, ROTULO_CV } from "../cv";
 import { useTitulo } from "../seo";
-
-// botão do CV: só aparece quando há um CV carregado no admin
-function CvButton() {
-  const { t } = useLang();
-  const { disponiveis } = useCv();
-  const [aberto, setAberto] = useState(false);
-  const caixa = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!aberto) return;
-    const clicouFora = (e: MouseEvent) => {
-      if (!caixa.current?.contains(e.target as Node)) setAberto(false);
-    };
-    const carregouEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setAberto(false);
-    };
-    document.addEventListener("mousedown", clicouFora);
-    document.addEventListener("keydown", carregouEsc);
-    return () => {
-      document.removeEventListener("mousedown", clicouFora);
-      document.removeEventListener("keydown", carregouEsc);
-    };
-  }, [aberto]);
-
-  if (!disponiveis.length) return null;
-  const rotulo = t("descarregar CV", "download CV");
-
-  if (disponiveis.length === 1) {
-    return (
-      <a className="btn" href={disponiveis[0].url} target="_blank" rel="noopener noreferrer">
-        <Icon name="download" size={14} /> {rotulo}
-      </a>
-    );
-  }
-
-  return (
-    <div ref={caixa} style={{ position: "relative" }}>
-      <button
-        type="button"
-        className="btn"
-        aria-haspopup="menu"
-        aria-expanded={aberto}
-        onClick={() => setAberto((o) => !o)}
-      >
-        <Icon name="download" size={14} /> {rotulo}
-        <Icon
-          name="chevronRight"
-          size={12}
-          style={{ transform: aberto ? "rotate(-90deg)" : "rotate(90deg)", transition: "transform 160ms var(--ease-out)" }}
-        />
-      </button>
-      {aberto && (
-        <div
-          role="menu"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            left: 0,
-            minWidth: "100%",
-            zIndex: 20,
-            background: "var(--bg-1)",
-            border: "1px solid var(--line)",
-            borderRadius: "var(--r-md)",
-            boxShadow: "var(--shadow-1)",
-            padding: 4,
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
-          }}
-        >
-          {disponiveis.map((cv) => (
-            <a
-              key={cv.lang}
-              role="menuitem"
-              href={cv.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setAberto(false)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 14,
-                padding: "7px 10px",
-                borderRadius: "var(--r-sm)",
-                color: "var(--fg-2)",
-                fontSize: 13,
-                whiteSpace: "nowrap",
-                transition: "background 120ms var(--ease-out), color 120ms var(--ease-out)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--bg-2)";
-                e.currentTarget.style.color = "var(--fg)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "var(--fg-2)";
-              }}
-            >
-              {t(ROTULO_CV[cv.lang].pt, ROTULO_CV[cv.lang].en)}
-              <span className="mono" style={{ fontSize: 10, color: "var(--fg-4)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                {cv.lang}
-              </span>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------- Hero ----------
 
@@ -156,7 +46,7 @@ function Hero() {
           }}
         >
           <span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--success)", boxShadow: "0 0 10px var(--success)" }} />
-          {t("disponível para projetos · 2026", "available for projects · 2026")}
+          {t("à procura de estágio curricular · aberto a propostas", "looking for a curricular internship · open to proposals")}
         </div>
 
         <h1
@@ -415,15 +305,15 @@ function AboutStrip() {
         <div style={{ fontSize: 16, lineHeight: 1.6, color: "var(--fg-2)", textWrap: "pretty" }}>
           <p style={{ marginTop: 0 }}>
             {t(
-              "Frequento Engenharia Informática no ISEC. Antes do percurso universitário concluí o curso Técnico de Informática — Sistemas, base que me permitiu chegar à licenciatura com fundamentos práticos já consolidados.",
-              "I'm currently studying Computer Engineering at ISEC. Before university I completed the IT Technician course — Systems, a foundation that let me arrive at the degree with hands-on fundamentals already in place."
+              "Frequento Engenharia Informática no ISEC, em Coimbra, com dois estágios em desenvolvimento de software concluídos e um curso profissional de informática antes disso. O meu foco está no desenvolvimento de software, desde a modelação de dados até à interface final.",
+              "I'm studying Computer Engineering at ISEC, in Coimbra, with two completed software internships and a vocational IT diploma behind me. My focus is on software development, from data modelling all the way to the final interface."
             )}
           </p>
           <p>
-            {t(
-              "O meu foco está no desenvolvimento de software, desde a modelação de dados até à interface final. Mais recentemente tenho dedicado tempo a explorar como ferramentas de inteligência artificial podem otimizar e agilizar o trabalho técnico do dia-a-dia — um campo que considero cada vez mais relevante e onde pretendo continuar a aprofundar conhecimento.",
-              "My focus is on software development, from data modelling all the way to the final interface. Lately I've been exploring how AI tools can optimize and speed up day-to-day technical work — a field I find increasingly relevant and one I plan to keep going deeper into."
-            )}
+            <Link to="/sobre" className="mono" style={{ color: "var(--accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+              {t("percurso, competências e formação", "background, skills and education")}
+              <Icon name="arrowUpRight" size={12} />
+            </Link>
           </p>
           <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
             <button className="btn btn-primary" onClick={() => navigate("/contacto")}>

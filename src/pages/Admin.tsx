@@ -5,6 +5,7 @@ import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import { type Project } from "../data";
 import { lerMarcos } from "../percurso";
+import SobreView from "./AdminSobre";
 import { BLOCO_VAZIO, PASSO_VAZIO, fromDemoForm, pickPt, toDemoForm, toLoc, toPair, type DemoForm, type LocPair } from "../demoForm";
 import { CHAVE_CV } from "../cv";
 import { type Lang } from "../lang";
@@ -30,7 +31,7 @@ import { supabase, supabaseConfigured } from "../supabase";
 // Admin: projetos via projectsStore; auth Supabase quando configurado,
 // senão fallback local. As mensagens são lidas por email; aqui só contam.
 
-type View = "list" | "edit" | "new" | "cv" | "percurso" | "stats";
+type View = "list" | "edit" | "new" | "cv" | "percurso" | "sobre" | "stats";
 
 // ---------- login ----------
 // fallback local: hash SHA-256 das credenciais do .env.local
@@ -271,7 +272,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
             <Logo size={22} />
           </button>
           <span className="hide-sm" style={{ fontSize: 12, color: "var(--fg-4)" }}>
-            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "cv" ? "cv" : view === "percurso" ? "percurso" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
+            admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "cv" ? "cv" : view === "percurso" ? "percurso" : view === "sobre" ? "sobre" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -295,6 +296,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           <SidebarItem icon="layers" label="projetos" count={projects.length} active={view === "list" || view === "edit" || view === "new"} onClick={() => setView("list")} />
           <SidebarItem icon="download" label="cv" active={view === "cv"} onClick={() => setView("cv")} />
           <SidebarItem icon="clock" label="percurso" active={view === "percurso"} onClick={() => setView("percurso")} />
+          <SidebarItem icon="edit" label="sobre" active={view === "sobre"} onClick={() => setView("sobre")} />
           <SidebarItem icon="zap" label="estatísticas" active={view === "stats"} onClick={() => setView("stats")} />
 
           <DbStatus projects={projects.length} messages={messages.length} />
@@ -310,6 +312,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           )}
           {view === "cv" && <CvView />}
           {view === "percurso" && <PercursoView />}
+          {view === "sobre" && <SobreView />}
           {view === "stats" && <StatsView />}
         </main>
       </div>
