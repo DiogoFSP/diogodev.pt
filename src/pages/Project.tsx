@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import SmartLink from "../components/SmartLink";
@@ -278,7 +278,6 @@ function TeamStrip({ project }: { project: ProjectData }) {
 
 function UpNext({ current }: { current: ProjectData }) {
   const { t, lang } = useLang();
-  const navigate = useNavigate();
   const { projects } = useProjects();
   const others = projects.filter((p) => p.id !== current.id && p.status !== "hidden");
   if (others.length === 0) return null;
@@ -292,15 +291,16 @@ function UpNext({ current }: { current: ProjectData }) {
           return (
             <article
               key={p.id}
-              onClick={() => navigate(`/projeto/${p.slug}`)}
               className="hover-glow upnext-row"
-              style={{ padding: 16, border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", cursor: "pointer", marginBottom: 12 }}
+              style={{ position: "relative", padding: 16, border: "1px solid var(--line)", borderRadius: "var(--r-lg)", background: "var(--bg-1)", cursor: "pointer", marginBottom: 12 }}
             >
               <div style={{ height: 80, borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--line)" }}>
                 <ProjectThumb id={p.id} image={p.image} alt={p.title} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em" }}>{p.title}</h3>
+                <h3 style={{ margin: 0, fontSize: 20, fontWeight: 500, letterSpacing: "-0.01em" }}>
+                  <Link to={`/projeto/${p.slug}`} className="card-link">{p.title}</Link>
+                </h3>
                 <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--fg-2)" }}>{loc(p.tagline, lang)}</p>
               </div>
               <Icon name="arrowRight" size={18} style={{ color: "var(--fg-3)", marginRight: 8 }} />

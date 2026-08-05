@@ -168,6 +168,9 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
 }
 .tag.accent { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 
+.card-link { color: inherit; text-decoration: none; }
+.card-link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+
 /* Input */
 .input, .textarea, .select {
   width: 100%;

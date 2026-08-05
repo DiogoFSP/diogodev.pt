@@ -137,7 +137,7 @@ function ProjectsHeader({ count }: { count: number }) {
 }
 
 // tamanhos: wide (2 colunas), tall (1 coluna x 2 linhas), small (1x1)
-function BentoCard({ project, size, onOpen }: { project: Project; size: Project["featured"]; onOpen: () => void }) {
+function BentoCard({ project, size }: { project: Project; size: Project["featured"] }) {
   const { t, lang } = useLang();
   const cardRef = useRef<HTMLElement>(null);
   const [hover, setHover] = useState(false);
@@ -166,7 +166,6 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
       ref={cardRef}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      onClick={onOpen}
       style={{
         ...sizeStyles,
         position: "relative",
@@ -206,7 +205,7 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
           <span style={{ width: 4, height: 4, borderRadius: 999, background: project.accent }} />
           {project.year} · {loc(project.role, lang)}
         </div>
-        <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6 }}>
+        <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6, zIndex: 2 }}>
           {project.github && <QuickLink href={project.github} icon="github" label={t("{p} no GitHub", "{p} on GitHub").replace("{p}", project.title)} hover={hover} />}
           {project.demo && <QuickLink href={project.demo} icon="external" label={t("ver {p} a funcionar", "see {p} running").replace("{p}", project.title)} hover={hover} delay={60} />}
         </div>
@@ -220,21 +219,20 @@ function BentoCard({ project, size, onOpen }: { project: Project; size: Project[
             fontSize: size === "tall" ? 30 : 22,
             fontWeight: 500,
             letterSpacing: "-0.02em",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
           }}
         >
-          {project.title}
-          <Icon
-            name="arrowUpRight"
-            size={16}
-            style={{
-              color: hover ? "var(--fg)" : "var(--fg-3)",
-              transform: hover ? "translate(2px, -2px)" : "none",
-              transition: "transform 280ms var(--ease-out), color 280ms var(--ease-out)",
-            }}
-          />
+          <Link to={`/projeto/${project.slug}`} className="card-link" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {project.title}
+            <Icon
+              name="arrowUpRight"
+              size={16}
+              style={{
+                color: hover ? "var(--fg)" : "var(--fg-3)",
+                transform: hover ? "translate(2px, -2px)" : "none",
+                transition: "transform 280ms var(--ease-out), color 280ms var(--ease-out)",
+              }}
+            />
+          </Link>
         </h3>
         <p style={{ margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--fg-2)", textWrap: "pretty" }}>
           {size === "tall" ? loc(project.summary, lang) : loc(project.tagline, lang)}
@@ -333,7 +331,6 @@ function AboutStrip() {
 // ---------- Página ----------
 
 export default function Home() {
-  const navigate = useNavigate();
   useTitulo(null);
   const { projects: all } = useProjects();
   const projects = all.filter((p) => p.status !== "hidden");
@@ -346,7 +343,7 @@ export default function Home() {
         <div className="container">
           <div className="projects-grid" style={{ "--cols": projects.length < 3 ? 2 : 3 } as React.CSSProperties}>
             {projects.map((p) => (
-              <BentoCard key={p.id} project={p} size={p.featured} onOpen={() => navigate(`/projeto/${p.slug}`)} />
+              <BentoCard key={p.id} project={p} size={p.featured} />
             ))}
           </div>
         </div>

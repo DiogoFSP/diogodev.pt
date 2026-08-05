@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Icon from "../components/Icon";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
@@ -88,7 +88,6 @@ export default function Admin() {
 }
 
 function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -126,9 +125,9 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 220ms var(--ease-out)" }}>
       <form onSubmit={submit} style={{ width: 360, maxWidth: "90vw", background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: 28, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} className="mono">
-          <button type="button" onClick={() => navigate("/")} title="voltar ao site" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: "inherit" }}>
+          <Link to="/" title="voltar ao site" style={{ display: "flex", alignItems: "center", color: "inherit" }}>
             <Logo size={22} />
-          </button>
+          </Link>
           <span style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>admin</span>
         </div>
         <AField label="email">
@@ -141,9 +140,9 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
         <button type="submit" className="btn btn-primary" disabled={checking} style={{ justifyContent: "center", opacity: checking ? 0.7 : 1 }}>
           <Icon name="arrowRight" size={14} /> entrar
         </button>
-        <button type="button" className="btn btn-ghost mono" onClick={() => navigate("/")} style={{ justifyContent: "center", fontSize: 11 }}>
+        <Link to="/" className="btn btn-ghost mono" style={{ justifyContent: "center", fontSize: 11, textDecoration: "none" }}>
           <Icon name="chevronLeft" size={12} /> voltar ao site
-        </button>
+        </Link>
       </form>
     </div>
   );
@@ -268,9 +267,9 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       {/* chrome do topo */}
       <div style={{ background: "var(--bg-1)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 52, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }} className="mono">
-          <button onClick={() => navigate("/")} title="voltar ao site" style={{ background: "none", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", color: "inherit" }}>
+          <Link to="/" title="voltar ao site" style={{ display: "flex", alignItems: "center", color: "inherit" }}>
             <Logo size={22} />
-          </button>
+          </Link>
           <span className="hide-sm" style={{ fontSize: 12, color: "var(--fg-4)" }}>
             admin / {view === "list" ? "projetos" : view === "new" ? "novo projeto" : view === "cv" ? "cv" : view === "percurso" ? "percurso" : view === "sobre" ? "sobre" : view === "stats" ? "estatísticas" : `a editar · ${editing?.slug}`}
           </span>

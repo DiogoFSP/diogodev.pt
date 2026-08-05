@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { cliqueSimples } from "../cliques";
 import { useLang } from "../lang";
 import Icon from "./Icon";
 import LangToggle from "./LangToggle";
@@ -37,6 +38,7 @@ function ActiveLine() {
 function LinkSeccao({ id, label, ativo, aoAbrir }: { id: string; label: string; ativo: boolean; aoAbrir: (id: string) => void }) {
   const { pathname } = useLocation();
   const abrir = (e: React.MouseEvent) => {
+    if (!cliqueSimples(e)) return;
     aoAbrir(id);
     const alvo = pathname === "/" ? document.getElementById(id) : null;
     if (alvo) {
@@ -78,14 +80,14 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
 
   // já na página inicial: sobe ao topo em vez de "navegar"
   const irParaTopo = (e: React.MouseEvent) => {
-    if (pathname !== "/") return;
+    if (pathname !== "/" || !cliqueSimples(e)) return;
     e.preventDefault();
     setSeccao("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const irParaTrabalhos = (e: React.MouseEvent) => {
-    if (pathname !== "/") return;
+    if (pathname !== "/" || !cliqueSimples(e)) return;
     const alvo = document.getElementById("work");
     if (!alvo) return;
     e.preventDefault();

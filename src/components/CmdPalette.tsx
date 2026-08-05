@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProjects } from "../projectsStore";
+import { cliqueSimples } from "../cliques";
 import { useLang } from "../lang";
 import { useCv, ROTULO_CV } from "../cv";
 import { useTheme } from "../theme";
-import { openSafeExternalUrl } from "../security/url";
+import { isSafeInternalPath, openSafeExternalUrl } from "../security/url";
 import Icon from "./Icon";
 import Terminal from "./Terminal";
 
@@ -13,6 +14,7 @@ type Item = {
   icon: string;
   label: string;
   kbd?: string;
+  href?: string;
   run: () => void;
 };
 
@@ -20,6 +22,14 @@ type Props = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
+
+function Tecla({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mono" style={{ fontSize: 10, padding: "3px 7px", borderRadius: 4, border: "1px solid var(--line-strong)", color: "var(--fg-3)", background: "var(--bg-2)" }}>
+      {children}
+    </span>
+  );
+}
 
 export default function CmdPalette({ open, setOpen }: Props) {
   const { t, lang, setLang } = useLang();
@@ -90,9 +100,9 @@ export default function CmdPalette({ open, setOpen }: Props) {
 
   const items = useMemo<Item[]>(() => {
     const nav: Item[] = [
-      { group: t("navegação", "navigation"), icon: "code", label: `${t("ir para", "go to")} · ${t("trabalhos", "work")}`, run: () => goSection("work") },
-      { group: t("navegação", "navigation"), icon: "layers", label: `${t("ir para", "go to")} · ${t("sobre", "about")}`, run: () => { setOpen(false); navigate("/sobre"); } },
-      { group: t("navegação", "navigation"), icon: "edit", label: t("abrir formulário de contacto", "open contact form"), run: () => { setOpen(false); navigate("/contacto"); } },
+      { group: t("navegação", "navigation"), icon: "code", label: `${t("ir para", "go to")} · ${t("trabalhos", "work")}`, href: "/#work", run: () => goSection("work") },
+      { group: t("navegação", "navigation"), icon: "layers", label: `${t("ir para", "go to")} · ${t("sobre", "about")}`, href: "/sobre", run: () => { setOpen(false); navigate("/sobre"); } },
+      { group: t("navegação", "navigation"), icon: "edit", label: t("abrir formulário de contacto", "open contact form"), href: "/contacto", run: () => { setOpen(false); navigate("/contacto"); } },
     ];
     const projs: Item[] = allProjects
       .filter((p) => p.status !== "hidden")
@@ -100,6 +110,7 @@ export default function CmdPalette({ open, setOpen }: Props) {
         group: t("projetos", "projects"),
         icon: "zap",
         label: `${t("abrir", "open")} · ${p.title}`,
+        href: `/projeto/${p.slug}`,
         run: () => { setOpen(false); navigate(`/projeto/${p.slug}`); },
       }));
     const actions: Item[] = [
@@ -111,18 +122,30 @@ export default function CmdPalette({ open, setOpen }: Props) {
         label: cvs.length > 1
           ? t(`descarregar CV · ${ROTULO_CV[cv.lang].pt}`, `download CV · ${ROTULO_CV[cv.lang].en}`)
           : t("descarregar CV", "download CV"),
+        href: cv.url,
         run: () => { openSafeExternalUrl(cv.url); setOpen(false); },
       })),
-      { group: t("ações", "actions"), icon: "command", label: t("abrir admin", "open admin"), run: () => { setOpen(false); navigate("/admin"); } },
+      { group: t("ações", "actions"), icon: "command", label: t("abrir admin", "open admin"), href: "/admin", run: () => { setOpen(false); navigate("/admin"); } },
     ];
     const links: Item[] = [
-      { group: t("ligações", "links"), icon: "github", label: "GitHub", kbd: "↗", run: () => { window.open("https://github.com/DiogoFSP", "_blank", "noopener"); setOpen(false); } },
-      { group: t("ligações", "links"), icon: "external", label: "LinkedIn", kbd: "↗", run: () => { window.open("https://www.linkedin.com/in/diogofspinto17/", "_blank", "noopener"); setOpen(false); } },
+      { group: t("ligações", "links"), icon: "github", label: "GitHub", kbd: "↗", href: "https://github.com/DiogoFSP", run: () => { window.open("https://github.com/DiogoFSP", "_blank", "noopener"); setOpen(false); } },
+      { group: t("ligações", "links"), icon: "external", label: "LinkedIn", kbd: "↗", href: "https://www.linkedin.com/in/diogofspinto17/", run: () => { window.open("https://www.linkedin.com/in/diogofspinto17/", "_blank", "noopener"); setOpen(false); } },
       { group: t("ligações", "links"), icon: "arrowUpRight", label: "Email · diogo@diogodev.pt", run: () => { window.location.href = "mailto:diogo@diogodev.pt"; setOpen(false); } },
     ];
     return [...nav, ...projs, ...actions, ...links];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t, lang, theme, pathname, allProjects, cvs]);
+
+  const acionar = (it: Item | undefined, novoSeparador: boolean) => {
+    if (!it) return;
+    if (novoSeparador && it.href) {
+      const aberto = isSafeInternalPath(it.href)
+        ? Boolean(window.open(it.href, "_blank", "noopener,noreferrer"))
+        : openSafeExternalUrl(it.href);
+      if (aberto) { setOpen(false); return; }
+    }
+    it.run();
+  };
 
   // pesquisa insensível a acentos
   const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -136,7 +159,7 @@ export default function CmdPalette({ open, setOpen }: Props) {
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") { e.preventDefault(); navSource.current = "key"; setIdx((i) => Math.min(i + 1, filtered.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); navSource.current = "key"; setIdx((i) => Math.max(i - 1, 0)); }
-    else if (e.key === "Enter") { e.preventDefault(); if (sudo) setTerminal(q.trim().toLowerCase()); else filtered[idx]?.run(); }
+    else if (e.key === "Enter") { e.preventDefault(); if (sudo) setTerminal(q.trim().toLowerCase()); else acionar(filtered[idx], e.ctrlKey || e.metaKey); }
     else if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
   };
 
@@ -154,6 +177,7 @@ export default function CmdPalette({ open, setOpen }: Props) {
 
   if (!open) return null;
 
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
   let lastGroup: string | null = null;
   return (
     <div
@@ -184,7 +208,7 @@ export default function CmdPalette({ open, setOpen }: Props) {
             placeholder={t("escreve um comando ou pesquisa…", "type a command or search…")}
             style={{ flex: 1, background: "none", border: 0, outline: "none", color: "var(--fg)", fontFamily: "var(--font-display)", fontSize: 15 }}
           />
-          <span className="mono" style={{ fontSize: 10, padding: "3px 7px", borderRadius: 4, border: "1px solid var(--line-strong)", color: "var(--fg-3)", background: "var(--bg-2)" }}>esc</span>
+          <Tecla>esc</Tecla>
         </div>
 
         <div ref={listRef} style={{ maxHeight: 380, overflowY: "auto", padding: "8px 8px 10px" }}>
@@ -219,7 +243,8 @@ export default function CmdPalette({ open, setOpen }: Props) {
                 )}
                 <button
                   data-idx={i}
-                  onClick={() => it.run()}
+                  onClick={(e) => acionar(it, !cliqueSimples(e))}
+                  onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); acionar(it, true); } }}
                   onMouseEnter={() => { navSource.current = "mouse"; setIdx(i); }}
                   style={{
                     display: "flex", alignItems: "center", gap: 12, width: "100%",
@@ -238,6 +263,12 @@ export default function CmdPalette({ open, setOpen }: Props) {
               </Fragment>
             );
           })}
+        </div>
+
+        <div className="mono" style={{ display: "flex", gap: 16, flexWrap: "wrap", padding: "9px 16px", borderTop: "1px solid var(--line)", background: "var(--bg-2)", fontSize: 10, color: "var(--fg-4)" }}>
+          <span><Tecla>↑↓</Tecla> {t("navegar", "move")}</span>
+          <span><Tecla>↵</Tecla> {t("abrir", "open")}</span>
+          <span><Tecla>{isMac ? "⌘" : "ctrl"} ↵</Tecla> {t("separador novo", "new tab")}</span>
         </div>
         </>
         )}
