@@ -197,7 +197,7 @@ function BentoCard({ project, size }: { project: Project; size: Project["feature
       />
 
       {/* miniatura */}
-      <div style={{ position: "relative", flex: size === "tall" ? "1 1 60%" : "1 1 55%", minHeight: 0, overflow: "hidden", borderBottom: "1px solid var(--line)" }}>
+      <div className="card-thumb" style={{ position: "relative", flex: size === "tall" ? "1 1 60%" : "1 1 55%", minHeight: 0, overflow: "hidden", borderBottom: "1px solid var(--line)" }}>
         <div style={{ position: "absolute", inset: 0, transform: hover ? "scale(1.04)" : "scale(1)", transition: "transform 700ms var(--ease-out)" }}>
           <ProjectThumb id={project.id} image={project.image} alt={project.title} largo={size === "wide"} />
         </div>

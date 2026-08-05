@@ -281,6 +281,10 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
     grid-row: auto !important;
     min-height: 440px !important;
   }
+  .card-thumb {
+    flex: 0 0 auto !important;
+    aspect-ratio: 9 / 8;
+  }
   .project-thumb { min-height: 260px; }
   .metrics-strip { grid-template-columns: 1fr 1fr; }
   .metrics-strip > div { border-bottom: 1px solid var(--line); }
