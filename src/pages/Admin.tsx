@@ -125,7 +125,7 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 220ms var(--ease-out)" }}>
       <form onSubmit={submit} style={{ width: 360, maxWidth: "90vw", background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", padding: 28, display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }} className="mono">
-          <Link to="/" title="voltar ao site" style={{ display: "flex", alignItems: "center", color: "inherit" }}>
+          <Link to="/" title="voltar ao site" style={{ display: "flex", alignItems: "center", color: "inherit", textDecoration: "none" }}>
             <Logo size={22} />
           </Link>
           <span style={{ fontSize: 10, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase" }}>admin</span>
@@ -267,7 +267,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       {/* chrome do topo */}
       <div style={{ background: "var(--bg-1)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 52, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }} className="mono">
-          <Link to="/" title="voltar ao site" style={{ display: "flex", alignItems: "center", color: "inherit" }}>
+          <Link to="/" title="voltar ao site" style={{ display: "flex", alignItems: "center", color: "inherit", textDecoration: "none" }}>
             <Logo size={22} />
           </Link>
           <span className="hide-sm" style={{ fontSize: 12, color: "var(--fg-4)" }}>
