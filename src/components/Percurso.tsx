@@ -12,14 +12,16 @@ export default function Percurso() {
   if (itens.length === 0) return null;
 
   return (
-    <section id="percurso" style={{ padding: "40px 0 20px", scrollMarginTop: 80 }}>
-      <div className="container">
-        <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>
-          /{t("percurso", "path")}
+    <section id="percurso" style={{ padding: "40px 0", scrollMarginTop: 80 }}>
+      <div className="container section-shell">
+        <div>
+          <div className="mono" style={{ fontSize: 11, color: "var(--fg-4)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 10 }}>
+            /{t("percurso", "path")}
+          </div>
+          <h2 style={{ fontSize: 22, fontWeight: 400, letterSpacing: "-0.02em", margin: 0, textWrap: "balance" }}>
+            {t("Como cheguei aqui.", "How I got here.")}
+          </h2>
         </div>
-        <h2 style={{ fontSize: 28, fontWeight: 400, letterSpacing: "-0.02em", margin: "0 0 32px" }}>
-          {t("Como cheguei aqui.", "How I got here.")}
-        </h2>
 
         <ol style={{ listStyle: "none", margin: 0, padding: 0, position: "relative" }}>
           {itens.map((item, i) => {

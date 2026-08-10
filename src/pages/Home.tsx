@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CvButton from "../components/CvButton";
 import Footer from "../components/Footer";
-import Percurso from "../components/Percurso";
 import Icon from "../components/Icon";
 import SmartLink from "../components/SmartLink";
 import { ProjectThumb } from "../components/thumbs";
@@ -349,7 +348,6 @@ export default function Home() {
         </div>
       </div>
       <AboutStrip />
-      <Percurso />
       <Footer />
     </main>
   );

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import CvButton from "../components/CvButton";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
+import Percurso from "../components/Percurso";
 import { loc } from "../data";
 import { useLang } from "../lang";
 import { useTitulo } from "../seo";
@@ -73,6 +74,8 @@ export default function Sobre() {
           </aside>
         </div>
       </section>
+
+      <Percurso />
 
       {conteudo.competencias.length > 0 && (
         <Seccao eyebrow={t("competências", "skills")} titulo={t("Com o que trabalho.", "What I work with.")}>

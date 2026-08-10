@@ -35,25 +35,6 @@ function ActiveLine() {
   );
 }
 
-function LinkSeccao({ id, label, ativo, aoAbrir }: { id: string; label: string; ativo: boolean; aoAbrir: (id: string) => void }) {
-  const { pathname } = useLocation();
-  const abrir = (e: React.MouseEvent) => {
-    if (!cliqueSimples(e)) return;
-    aoAbrir(id);
-    const alvo = pathname === "/" ? document.getElementById(id) : null;
-    if (alvo) {
-      e.preventDefault();
-      alvo.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-  return (
-    <Link to={`/#${id}`} onClick={abrir} className="navlink hide-xs" style={navLinkStyle({ isActive: ativo })}>
-      {ativo && <ActiveLine />}
-      {label}
-    </Link>
-  );
-}
-
 export default function TopNav({ onPalette }: { onPalette?: () => void }) {
   const { t } = useLang();
   const { pathname, hash } = useLocation();
@@ -137,7 +118,6 @@ export default function TopNav({ onPalette }: { onPalette?: () => void }) {
               </>
             )}
           </NavLink>
-          <LinkSeccao id="percurso" label={t("percurso", "path")} ativo={seccao === "percurso"} aoAbrir={setSeccao} />
           <NavLink to="/sobre" className="navlink" style={navLinkStyle}>
             {({ isActive }) => (
               <>
