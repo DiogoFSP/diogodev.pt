@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useProjects } from "../projectsStore";
+import { useProjects, usePausarAtualizacoes } from "../projectsStore";
 import { cliqueSimples } from "../cliques";
 import { useLang } from "../lang";
 import { useCv, ROTULO_CV } from "../cv";
@@ -46,6 +46,8 @@ export default function CmdPalette({ open, setOpen }: Props) {
   const listRef = useRef<HTMLDivElement>(null);
   // só a navegação por teclado deve provocar auto-scroll da lista
   const navSource = useRef<"key" | "mouse">("key");
+
+  usePausarAtualizacoes(open, "paleta de comandos aberta");
 
   // atalho global Ctrl/Cmd+K
   useEffect(() => {

@@ -21,6 +21,7 @@ import {
   uploadThumb,
   upsertProject,
   useProjects,
+  usePausarAtualizacoes,
   useSetting,
   type Message,
 } from "../projectsStore";
@@ -157,6 +158,8 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
   const [showHidden, setShowHidden] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+
+  usePausarAtualizacoes(view === "edit" || view === "new", "editor do admin aberto");
 
   // as mensagens são lidas por email; aqui servem só de contador
   const loadMessages = useCallback(() => {

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import SmartLink from "../components/SmartLink";
 import { ProjectThumb } from "../components/thumbs";
 import { loc, type Project as ProjectData } from "../data";
-import { useProjects } from "../projectsStore";
+import { useProjects, usePausarAtualizacoes } from "../projectsStore";
 import { useLang } from "../lang";
 import { useTitulo } from "../seo";
 
@@ -13,7 +13,10 @@ export default function Project() {
   const { slug } = useParams();
   const { t } = useLang();
   const { projects, loading } = useProjects();
-  const project = projects.find((p) => p.slug === slug);
+  const encontrado = projects.find((p) => p.slug === slug);
+  const ultimoVisto = useRef<{ slug?: string; projeto: ProjectData } | null>(null);
+  if (encontrado) ultimoVisto.current = { slug, projeto: encontrado };
+  const project = encontrado ?? (ultimoVisto.current?.slug === slug ? ultimoVisto.current?.projeto ?? null : null);
   useTitulo(project ? project.title : loading ? null : t("Projeto não encontrado", "Project not found"));
 
   // evita mostrar o 404 enquanto os dados carregam
@@ -189,6 +192,8 @@ function GallerySection({ project }: { project: ProjectData }) {
   const { t } = useLang();
   const images = project.gallery!;
   const [open, setOpen] = useState<number | null>(null);
+
+  usePausarAtualizacoes(open !== null, "galeria em ecrã cheio");
 
   // navegação por teclado com o lightbox aberto
   useEffect(() => {

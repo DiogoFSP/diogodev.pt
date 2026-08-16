@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
-import { addMessage, sendConfirmation } from "../projectsStore";
+import { addMessage, sendConfirmation, usePausarAtualizacoes } from "../projectsStore";
 import { MENSAGEM_MINIMA, validarContacto, type CampoContacto, type ErroContacto } from "../contactRules";
 import { loc } from "../data";
 import { useLang } from "../lang";
@@ -62,6 +62,9 @@ export default function Contact() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const porEnviar = !sent && (["name", "email", "subject", "message"] as const).some((k) => form[k].trim() !== "");
+  usePausarAtualizacoes(porEnviar, "formulário de contacto por enviar");
 
   const update = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm({ ...form, [k]: v });
   const blur = (k: keyof FormState) => setTouched({ ...touched, [k]: true });

@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 import Icon from "../components/Icon";
 import SmartLink from "../components/SmartLink";
-import { loc, type DemoBloco, type Localized } from "../data";
+import { loc, type DemoBloco, type Localized, type Project as ProjectData } from "../data";
 import { useLang } from "../lang";
 import { useProjects } from "../projectsStore";
 import { useTitulo } from "../seo";
@@ -16,7 +16,10 @@ export default function ProjectDemo() {
   const { projects, loading } = useProjects();
   const [copiado, setCopiado] = useState<string | null>(null);
 
-  const project = projects.find((p) => p.slug === slug || p.id === slug);
+  const encontrado = projects.find((p) => p.slug === slug || p.id === slug);
+  const ultimoVisto = useRef<{ slug?: string; projeto: ProjectData } | null>(null);
+  if (encontrado) ultimoVisto.current = { slug, projeto: encontrado };
+  const project = encontrado ?? (ultimoVisto.current?.slug === slug ? ultimoVisto.current?.projeto ?? null : null);
   const demo = project?.demo_config ?? null;
   const urlSegura = demo?.tipo === "embebido" ? sanitizeExternalUrl(demo.url) : null;
 

@@ -121,6 +121,7 @@ export function useProjects() {
 
   useEffect(() => {
     ouvintes.add(setProjects);
+    ligarTempoReal();
     carregarProjetos().finally(() => setLoading(false));
     return () => { ouvintes.delete(setProjects); };
   }, []);
@@ -245,6 +246,7 @@ export function useSetting(key: string) {
     let conjunto = ouvintesDefinicoes.get(key);
     if (!conjunto) { conjunto = new Set(); ouvintesDefinicoes.set(key, conjunto); }
     conjunto.add(setValue);
+    ligarTempoReal();
     carregarDefinicao(key).finally(() => setLoading(false));
     return () => { conjunto?.delete(setValue); };
   }, [key]);
@@ -255,6 +257,85 @@ export function useSetting(key: string) {
   }, [key]);
 
   return { value, loading, refresh };
+}
+
+// ---------------- atualização em direto ----------------
+
+type Pausa = { motivo: string };
+
+const pausas = new Set<Pausa>();
+const definicoesPendentes = new Set<string>();
+let projetosPendentes = false;
+let temporizador: ReturnType<typeof setTimeout> | null = null;
+let emDireto = false;
+
+function aplicarPendentes() {
+  if (pausas.size > 0) return;
+  if (projetosPendentes) {
+    projetosPendentes = false;
+    carregarProjetos(true);
+  }
+  if (definicoesPendentes.size > 0) {
+    const chaves = [...definicoesPendentes];
+    definicoesPendentes.clear();
+    chaves.forEach((chave) => carregarDefinicao(chave, true));
+  }
+}
+
+function agendarAtualizacao() {
+  if (temporizador !== null) return;
+  temporizador = setTimeout(() => {
+    temporizador = null;
+    aplicarPendentes();
+  }, 400);
+}
+
+function marcarTudoPendente() {
+  projetosPendentes = true;
+  cacheDefinicoes.forEach((_, chave) => definicoesPendentes.add(chave));
+  agendarAtualizacao();
+}
+
+export function pausarAtualizacoes(motivo: string): () => void {
+  const pausa: Pausa = { motivo };
+  pausas.add(pausa);
+  return () => {
+    if (!pausas.delete(pausa)) return;
+    aplicarPendentes();
+  };
+}
+
+export function usePausarAtualizacoes(ativo: boolean, motivo: string) {
+  useEffect(() => {
+    if (!ativo) return;
+    return pausarAtualizacoes(motivo);
+  }, [ativo, motivo]);
+}
+
+function ligarTempoReal() {
+  if (emDireto || !supabase) return;
+  emDireto = true;
+
+  supabase
+    .channel("site-em-direto")
+    .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => {
+      projetosPendentes = true;
+      agendarAtualizacao();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "settings" }, (payload) => {
+      const nova = payload.new as { key?: string } | null;
+      const antiga = payload.old as { key?: string } | null;
+      const chave = nova?.key ?? antiga?.key ?? null;
+      if (chave) definicoesPendentes.add(chave);
+      else cacheDefinicoes.forEach((_, k) => definicoesPendentes.add(k));
+      agendarAtualizacao();
+    })
+    .subscribe();
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") marcarTudoPendente();
+  });
+  window.addEventListener("online", marcarTudoPendente);
 }
 
 // ---------------- mensagens ----------------
