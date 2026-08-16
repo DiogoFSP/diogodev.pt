@@ -154,10 +154,10 @@ function BentoCard({ project, size }: { project: Project; size: Project["feature
     return () => el.removeEventListener("mousemove", onMove);
   }, []);
 
-  const sizeStyles = {
-    wide: { gridColumn: "span 2", gridRow: "span 1", minHeight: 340 },
-    tall: { gridColumn: "span 1", gridRow: "span 2", minHeight: 700 },
-    small: { gridColumn: "span 1", gridRow: "span 1", minHeight: 340 },
+  const { alturaMiniatura, ...sizeStyles } = {
+    wide: { gridColumn: "span 2", gridRow: "span 1", minHeight: 340, alturaMiniatura: 190 },
+    tall: { gridColumn: "span 1", gridRow: "span 2", minHeight: 700, alturaMiniatura: 380 },
+    small: { gridColumn: "span 1", gridRow: "span 1", minHeight: 340, alturaMiniatura: 190 },
   }[size];
 
   return (
@@ -196,7 +196,7 @@ function BentoCard({ project, size }: { project: Project; size: Project["feature
       />
 
       {/* miniatura */}
-      <div className="card-thumb" style={{ position: "relative", flex: size === "tall" ? "1 1 60%" : "1 1 55%", minHeight: 0, overflow: "hidden", borderBottom: "1px solid var(--line)" }}>
+      <div className="card-thumb" style={{ position: "relative", flex: `0 0 ${alturaMiniatura}px`, minHeight: 0, overflow: "hidden", borderBottom: "1px solid var(--line)" }}>
         <div style={{ position: "absolute", inset: 0, transform: hover ? "scale(1.04)" : "scale(1)", transition: "transform 700ms var(--ease-out)" }}>
           <ProjectThumb id={project.id} image={project.image} alt={project.title} largo={size === "wide"} />
         </div>

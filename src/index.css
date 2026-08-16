@@ -224,7 +224,7 @@ html, body { transition: background var(--t-mid) var(--ease-out), color var(--t-
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(var(--cols, 2), 1fr);
-  grid-auto-rows: auto;
+  grid-auto-rows: 1fr;
   gap: 16px;
 }
 .about-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 80px; }
